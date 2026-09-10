@@ -1,0 +1,12 @@
+import { BadgeIndianRupee, BookOpenCheck, CalendarDays, Check, ChevronDown, GraduationCap, LayoutDashboard, LogOut, Settings, Users } from "lucide-react";
+import { navItems } from "../constants/navigation";
+import type { University } from "../types";
+import { Popover } from "./popover";
+import { toast } from "./toast";
+
+interface SidebarProps { active: string; onChange: (view: string) => void; collapsed: boolean; universities: University[]; university: University; onUniversityChange: (universityId: string) => void; onLogout: () => void; }
+const icons = { dashboard: LayoutDashboard, students: Users, attendance: CalendarDays, payments: BadgeIndianRupee, internships: BookOpenCheck, courses: GraduationCap, settings: Settings };
+
+export function Sidebar({ active, onChange, collapsed, universities, university, onUniversityChange, onLogout }: SidebarProps) {
+  return <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}><div className="brand"><span className="brand-mark"><GraduationCap size={21}/></span><span>Ficus Global</span></div><p className="workspace-label">WORKSPACE</p><Popover className="sidebar-university-popover" trigger={({ open, toggle }) => <button className="workspace" type="button" onClick={toggle} aria-label="Switch university" aria-expanded={open}><span className="workspace-avatar">{university.name.slice(0, 1)}</span><span><b>{university.name}</b><small>Admin workspace</small></span><ChevronDown size={16}/></button>}>{({ close }) => <div className="popover-panel" role="listbox" aria-label="Switch university"><p>Switch university</p>{universities.map(item => <button className={item.id === university.id ? "university-menu-option selected" : "university-menu-option"} key={item.id} type="button" role="option" aria-selected={item.id === university.id} onClick={() => { onUniversityChange(item.id); close(); }}><span>{item.name.slice(0, 1)}</span><i><b>{item.name}</b><small>{item.city}</small></i>{item.id === university.id && <Check size={16}/>}</button>)}</div>}</Popover><nav>{navItems.map((item) => { const Icon = icons[item.id]; return <button key={item.id} title={collapsed ? item.label : undefined} className={`nav-link ${active === item.id ? "active" : ""}`} onClick={() => onChange(item.id)}><Icon size={19}/><span>{item.label}</span>{item.count ? <em>{item.count}</em> : null}</button>; })}</nav><div className="sidebar-bottom"><button className="logout-button" onClick={() => { toast.success("Signed out successfully."); onLogout(); }}><LogOut size={18}/><span>Log out</span></button></div></aside>;
+}

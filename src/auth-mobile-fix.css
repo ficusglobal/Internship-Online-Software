@@ -1,0 +1,33 @@
+@media (max-width: 64rem) {
+  .auth-page.auth-admin .auth-showcase {
+    display: none !important;
+  }
+
+  .auth-page.auth-admin .auth-shell {
+    min-height: auto;
+    margin: 0;
+    padding: 1.25rem 1rem 2rem;
+  }
+
+  .auth-login-inline {
+    border: 0;
+    background: transparent;
+    color: var(--purple);
+    padding: 0;
+    font: inherit;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-align: center;
+  }
+}
+
+.auth-login-inline {
+  border: 0;
+  background: transparent;
+  color: var(--purple);
+  padding: 0;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-align: center;
+}

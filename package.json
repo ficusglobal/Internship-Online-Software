@@ -1,0 +1,16 @@
+{
+  "name": "interntrack-admin",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": { "dev": "vite", "build": "tsc -b && vite build", "lint": "tsc -b --noEmit" },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "formik": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "yup": "latest"
+  },
+  "devDependencies": { "typescript": "latest", "vite": "latest", "tailwindcss": "latest", "@types/react": "latest", "@types/react-dom": "latest" }
+}
