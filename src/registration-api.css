@@ -1,0 +1,191 @@
+.registration-progress span:nth-of-type(1)::after {
+  content: "Academic details" !important;
+}
+
+.registration-progress span:nth-of-type(2)::after {
+  content: "Course & batch" !important;
+}
+
+.registration-progress span:nth-of-type(3)::after {
+  content: "Review" !important;
+}
+
+.registration-form label:has(input[name="registrationNumber"]) {
+  display: grid !important;
+}
+
+.registration-status {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.75rem;
+  margin: -0.2rem 0 0.2rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--purple) 24%, var(--border));
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--purple-soft) 60%, var(--surface));
+  color: var(--text);
+  font-size: 0.78rem;
+}
+
+.registration-status-error {
+  border-color: color-mix(in srgb, #c34d57 36%, var(--border));
+  background: color-mix(in srgb, #c34d57 8%, var(--surface));
+}
+
+.registration-status span {
+  flex: 1;
+}
+
+.registration-status button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 0;
+  background: transparent;
+  color: var(--purple);
+  padding: 0.3rem;
+  font: inherit;
+  font-weight: 700;
+}
+
+.optional-label {
+  width: max-content;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+
+.registration-review {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 1rem;
+}
+
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.review-grid section {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--soft) 68%, var(--surface));
+}
+
+.review-grid span,
+.review-fee span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.review-grid b {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.84rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-grid small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-fee {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--purple) 32%, var(--border));
+  border-radius: 0.75rem;
+  background: var(--purple-soft);
+}
+
+.review-fee b {
+  color: var(--purple);
+  font-size: 1rem;
+}
+
+.registration-form .terms-checkbox {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 0.7rem !important;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.terms-checkbox input {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0.15rem 0 0;
+  accent-color: var(--purple);
+}
+
+.terms-checkbox > span {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.77rem;
+  line-height: 1.45;
+}
+
+.terms-checkbox small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 400;
+}
+
+.registration-submit-error {
+  margin: 0;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, #c34d57 9%, var(--surface));
+  color: #c34d57;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.registration-form .button:disabled {
+  cursor: not-allowed;
+  filter: none;
+  opacity: 0.55;
+  transform: none;
+}
+
+.spin {
+  animation: registration-spin 0.8s linear infinite;
+}
+
+@keyframes registration-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 40rem) {
+  .review-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .review-grid b,
+  .review-grid small {
+    white-space: normal;
+  }
+}

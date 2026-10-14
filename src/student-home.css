@@ -1,0 +1,153 @@
+/* Student home screen (after sign-in) */
+
+.student-home {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.student-home-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.student-home-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.student-home-body {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+  display: grid;
+  gap: 20px;
+}
+
+.student-home-welcome h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.student-home-welcome p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.student-home-status {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft);
+  font-size: 0.95rem;
+}
+
+.student-home-status.is-issued {
+  border-color: #15803d;
+  color: #15803d;
+}
+
+.student-home-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.student-home-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 150px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.student-home-card:not(:disabled):hover,
+.student-home-card:not(:disabled):focus-visible {
+  border-color: var(--purple, #6d28d9);
+}
+
+.student-home-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+.student-home-card-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--soft);
+}
+
+.student-home-card-title {
+  font-weight: 700;
+  font-size: 1.02rem;
+}
+
+.student-home-card-text {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.student-home-soon {
+  margin-top: auto;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* Tablet */
+@media (min-width: 600px) {
+  .student-home-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Laptop and up */
+@media (min-width: 1024px) {
+  .student-home-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .student-home-header {
+    padding: 16px 40px;
+  }
+}
+
+/* Phones: keep the header buttons on one line */
+@media (max-width: 480px) {
+  .student-home-header {
+    padding: 12px 16px;
+  }
+  .student-home-body {
+    padding: 20px 16px 32px;
+  }
+  .student-home-welcome h1 {
+    font-size: 1.35rem;
+  }
+}

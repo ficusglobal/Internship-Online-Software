@@ -1,0 +1,32 @@
+/* Letter number panel and "complete payment" card on the acceptance letter page. */
+
+.letter-number-card .letter-number {
+  margin: 4px 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.letter-number-card .letter-number-pending {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.letter-number-card small,
+.letter-payment-card p {
+  color: var(--muted);
+}
+
+.letter-payment-card p {
+  margin: 4px 0 12px;
+}
+
+.letter-number-card .letter-issue-error {
+  display: block;
+  margin-top: 8px;
+  color: #b42318;
+  font-weight: 600;
+}

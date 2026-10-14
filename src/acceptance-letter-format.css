@@ -1,0 +1,364 @@
+/* Printed-document format of the acceptance letter (page 1) and the internship completion
+   certificate (page 2), copied from the Ficus Global originals. Each page is a fixed A4 canvas
+   (794x1123px) and is always light, because it is a printed document. */
+
+.fg-letter-pages {
+  display: flex;
+  flex-direction: column;
+  width: 794px;
+}
+
+.fg-letter,
+.fg-certificate {
+  position: relative;
+  width: 794px;
+  height: 1123px;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: #fff no-repeat 0 0 / 100% 100%;
+  color: #111;
+}
+
+/* ---------- Page 1: acceptance letter ---------- */
+
+.fg-letter {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 19px;
+  line-height: 1.5;
+  padding: 0 86px;
+}
+
+.fg-letter p {
+  margin: 0 0 16px;
+}
+
+.fg-letter-brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 140px 0 0;
+}
+
+.fg-letter-globe {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  color: #fff;
+  background: #2f8fd0;
+}
+
+.fg-letter-globe-leaf {
+  position: absolute;
+  left: -6px;
+  top: 4px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #6db33f;
+}
+
+.fg-letter-globe-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #2f8fd0;
+}
+
+.fg-letter-brand b {
+  display: block;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  font-size: 50px;
+  line-height: 1;
+  font-weight: 700;
+  color: #2f8fd0;
+  letter-spacing: 0.5px;
+}
+
+.fg-letter-brand small {
+  display: block;
+  margin-top: 4px;
+  padding: 2px 10px;
+  background: #e0521d;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.fg-letter h1 {
+  position: relative;
+  margin: 48px 0 36px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #111;
+}
+
+.fg-letter-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 26px;
+}
+
+.fg-letter-meta b {
+  font-weight: 700;
+}
+
+/* Handwritten-style entries, as on the printed letter */
+.fg-fill {
+  color: #1b2a8a;
+  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  font-size: 19px;
+}
+
+.fg-fill-small {
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+}
+
+.fg-letter-to {
+  margin-bottom: 6px !important;
+}
+
+.fg-letter-recipient {
+  display: grid;
+  grid-template-columns: 320px auto;
+  align-items: end;
+  row-gap: 4px;
+  margin: 0 0 26px;
+}
+
+.fg-letter-recipient dd {
+  margin: 0;
+  min-height: 26px;
+  border-bottom: 1px solid #111;
+  padding-left: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.fg-letter-recipient dt {
+  padding-left: 4px;
+}
+
+.fg-letter-sign {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 8px;
+}
+
+.fg-letter-sign p {
+  margin: 0;
+}
+
+.fg-letter-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-family: Arial, sans-serif;
+}
+
+.fg-letter-qr small {
+  font-size: 11px;
+  color: #333;
+}
+
+.fg-letter-footer {
+  position: absolute;
+  left: 44px;
+  right: 44px;
+  bottom: 26px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  color: #1d2b3a;
+}
+
+.fg-letter-footer > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fg-letter-footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fg-letter-footer > div:last-child span:last-child {
+  padding-left: 20px;
+}
+
+/* ---------- Page 2: internship completion certificate ---------- */
+
+.fg-certificate {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  color: #111;
+  padding: 0 60px;
+}
+
+.fg-cert-reg {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1d2b3a;
+}
+
+.fg-cert-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 40px 0 0 6px;
+}
+
+.fg-cert-brand .fg-cert-logo-text {
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  color: #2f8fd0;
+}
+
+.fg-cert-brand .fg-cert-tagline {
+  display: block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  background: #d7262e;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fg-certificate h2 {
+  margin: 18px 0 14px;
+  text-align: center;
+  font-family: "Arial Black", Arial, sans-serif;
+  font-size: 26px;
+  letter-spacing: 0.2px;
+  color: #0f2d5c;
+}
+
+.fg-cert-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  min-height: 30px;
+  margin-bottom: 4px;
+}
+
+.fg-cert-row > span:first-child {
+  white-space: nowrap;
+}
+
+.fg-cert-value {
+  flex: 1;
+  min-width: 0;
+  padding: 0 4px 2px;
+  border-bottom: 1px dotted #111;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #0f2d5c;
+}
+
+.fg-cert-value-short {
+  flex: 0 0 auto;
+  min-width: 90px;
+}
+
+.fg-cert-sentence {
+  margin: 10px 0 8px;
+}
+
+.fg-cert-assessment {
+  margin: 14px 0 6px;
+  font-weight: 700;
+}
+
+.fg-cert-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 6px 0 14px;
+  font-size: 13px;
+}
+
+.fg-cert-table th,
+.fg-cert-table td {
+  border: 1px solid #222;
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.fg-cert-table th {
+  font-weight: 700;
+  text-align: center;
+}
+
+.fg-cert-table td:first-child,
+.fg-cert-table th:first-child {
+  width: 56px;
+  text-align: center;
+}
+
+.fg-cert-table td:nth-child(3) {
+  height: 26px;
+}
+
+.fg-cert-sign {
+  margin-top: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.fg-cert-sign b {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.fg-cert-footer {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  bottom: 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 13px;
+  color: #1d2b3a;
+}
+
+.fg-cert-footer > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fg-cert-footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

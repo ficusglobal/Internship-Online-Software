@@ -1,0 +1,6 @@
+import { Bell, Moon, PanelLeftClose, PanelLeftOpen, Search, Sun } from "lucide-react";
+import type { Theme } from "../types";
+import { Input } from "./ui";
+
+interface HeaderProps { theme: Theme; setTheme: (theme: Theme) => void; title: string; description: string; sidebarCollapsed: boolean; onSidebarToggle: () => void; }
+export function Header({ theme, setTheme, title, description, sidebarCollapsed, onSidebarToggle }: HeaderProps) { return <header className="topbar"><div className="header-title"><button className="icon-button sidebar-toggle" onClick={onSidebarToggle} aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}>{sidebarCollapsed ? <PanelLeftOpen size={19}/> : <PanelLeftClose size={19}/>}</button><div><h1>{title}</h1><p>{description}</p></div></div><div className="header-actions"><label className="search"><Search size={18}/><Input placeholder="Search anything..." /></label><button className="icon-button" onClick={() => setTheme(theme === "light" ? "dark" : "light")} aria-label="Toggle theme">{theme === "light" ? <Moon size={19}/> : <Sun size={19}/>}</button><button className="icon-button notification" aria-label="Notifications"><Bell size={19}/><i/></button></div></header>; }

@@ -1,0 +1,76 @@
+/* Email verify button + OTP box (registration form) and the forgot-password steps. */
+
+.email-verify-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.email-verify-row > .input {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.email-verify-button,
+.email-verify-row > .button {
+  white-space: nowrap;
+}
+
+.email-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #15803d;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.email-otp-box {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: var(--soft);
+}
+
+.email-otp-box .registration-step-copy {
+  margin: 0;
+}
+
+.forgot-password-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.forgot-password-steps span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.forgot-password-steps span.active {
+  color: var(--text);
+}
+
+.forgot-password-steps span.complete {
+  color: #15803d;
+}
+
+.forgot-password-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.forgot-password-actions .button {
+  flex: 1 1 auto;
+}

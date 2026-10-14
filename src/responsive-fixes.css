@@ -1,0 +1,33 @@
+/* Responsive fixes for phones, tablets and laptops. Loaded last so these rules win. */
+
+/* Auth cards and forms may shrink to the screen width instead of forcing it wider */
+.auth-page,
+.auth-shell,
+.auth-card,
+.auth-form,
+.registration-form {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Registration progress (5 steps): wrap the "Step x of 5" label onto its own line */
+.registration-progress {
+  flex-wrap: wrap;
+  row-gap: 0.35rem;
+}
+
+.registration-progress b {
+  flex-basis: 100%;
+  margin-left: 0;
+}
+
+@media (max-width: 480px) {
+  .registration-progress i {
+    width: 0.7rem;
+  }
+  .registration-progress span {
+    width: 1.3rem;
+    height: 1.3rem;
+  }
+}
