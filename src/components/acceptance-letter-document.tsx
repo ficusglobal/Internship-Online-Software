@@ -12,6 +12,8 @@ import {
   type LetterDetails,
 } from "../lib/acceptance-letter";
 import "../acceptance-letter-format.css";
+import signatureUrl from "../assets/signature.png";
+import stampUrl from "../assets/stamp.png";
 
 // Both waves live in one full-page SVG used as a background image: html2canvas
 // renders background images reliably, unlike multiple inline SVGs.
@@ -119,7 +121,11 @@ export const AcceptanceLetterDocument = forwardRef<HTMLDivElement, AcceptanceLet
               <p>Thank you.</p>
 
               <div className="fg-letter-sign">
-                <div>
+                <div className="fg-letter-sign-block">
+                  <div className="fg-letter-sign-art">
+                    <img className="fg-letter-signature" src={signatureUrl} alt="" />
+                    <img className="fg-letter-stamp" src={stampUrl} alt="" />
+                  </div>
                   <p>Supervisor/Head IPO</p>
                   <p>(Signature and seal)</p>
                 </div>

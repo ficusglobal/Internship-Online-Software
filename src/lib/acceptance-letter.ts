@@ -40,6 +40,12 @@ export function formatCertificateDate(value?: string): string {
 export async function downloadLetterPdf(container: HTMLElement, fileName: string): Promise<void> {
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import("html2canvas"), import("jspdf")]);
   const pages = Array.from(container.querySelectorAll<HTMLElement>("[data-letter-page]"));
+  // Signature and stamp are images: wait until they are decoded, or they are left out of the PDF
+  await Promise.all(
+    Array.from(container.querySelectorAll("img")).map((img) =>
+      img.complete ? Promise.resolve() : new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; }),
+    ),
+  );
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
 
   for (const [index, page] of pages.entries()) {

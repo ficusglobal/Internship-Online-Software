@@ -362,3 +362,34 @@
   align-items: center;
   gap: 6px;
 }
+
+/* Signature and company stamp sit in the space above "Supervisor/Head IPO" on the acceptance letter */
+.fg-letter-sign-block {
+  position: relative;
+}
+
+.fg-letter-sign-art {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  width: 240px;
+  height: 92px;
+  pointer-events: none;
+}
+
+.fg-letter-signature {
+  position: absolute;
+  left: 0;
+  bottom: 14px;
+  height: 50px;
+  width: auto;
+}
+
+.fg-letter-stamp {
+  position: absolute;
+  left: 92px;
+  bottom: 0;
+  width: 104px;
+  height: auto;
+  opacity: 0.92;
+}
