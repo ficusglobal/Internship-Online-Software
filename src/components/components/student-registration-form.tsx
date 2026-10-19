@@ -5,7 +5,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Form, Formik } from "formik";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   authApi,
   masterDataApi,
@@ -39,7 +39,9 @@ interface RegistrationValues {
   collegeId: string;
   degree: string;
   department: string;
-  academicSession: string;
+  // Start and end dates of the academic session (YYYY-MM-DD); sent as academicSession "YYYY-YYYY"
+  sessionStart: string;
+  sessionEnd: string;
   majorSubject: string;
   registrationNumber: string;
   collegeRollNumber: string;
@@ -61,7 +63,8 @@ const initialValues: RegistrationValues = {
   collegeId: "",
   degree: "",
   department: "",
-  academicSession: "",
+  sessionStart: "",
+  sessionEnd: "",
   majorSubject: "",
   registrationNumber: "",
   collegeRollNumber: "",
@@ -83,7 +86,8 @@ const requiredFields: Array<keyof RegistrationValues> = [
   "collegeId",
   "degree",
   "department",
-  "academicSession",
+  "sessionStart",
+  "sessionEnd",
   "registrationNumber",
   "collegeRollNumber",
   "courseId",
@@ -103,7 +107,8 @@ const academicFields: Array<keyof RegistrationValues> = [
   "collegeId",
   "degree",
   "department",
-  "academicSession",
+  "sessionStart",
+  "sessionEnd",
   "registrationNumber",
   "collegeRollNumber",
 ];
@@ -139,6 +144,9 @@ const validate = (values: RegistrationValues) => {
   if (values.confirmPassword && values.confirmPassword !== values.password) {
     errors.confirmPassword = "Passwords do not match";
   }
+  if (values.sessionStart && values.sessionEnd && values.sessionEnd <= values.sessionStart) {
+    errors.sessionEnd = "End date must be after the start date";
+  }
   if (!values.termsAccepted) {
     errors.termsAccepted = "You must accept the terms to register";
   }
@@ -147,6 +155,12 @@ const validate = (values: RegistrationValues) => {
 };
 
 const RESEND_SECONDS = 60;
+
+const STEP_LABELS = ["Details", "Internship", "Review", "Verify email", "Payment"];
+
+// "2023-06-01" + "2027-05-31" -> "2023-2027" (the academicSession sent to the backend)
+const academicSessionOf = (values: Pick<RegistrationValues, "sessionStart" | "sessionEnd">) =>
+  `${values.sessionStart.slice(0, 4)}-${values.sessionEnd.slice(0, 4)}`;
 
 const formatDate = (value?: string) => {
   if (!value) return "Date not specified";
@@ -424,7 +438,7 @@ export function StudentRegistrationForm({
                 collegeId: Number(values.collegeId),
                 degree: values.degree.trim(),
                 department: values.department.trim(),
-                academicSession: values.academicSession.trim(),
+                academicSession: academicSessionOf(values),
                 majorSubject: values.majorSubject.trim(),
                 registrationNumber: values.registrationNumber.trim(),
                 collegeRollNumber: values.collegeRollNumber.trim(),
@@ -510,7 +524,7 @@ export function StudentRegistrationForm({
               mobileNo: values.mobileNo,
               degree: values.degree.trim(),
               department: values.department.trim(),
-              academicSession: values.academicSession.trim(),
+              academicSession: academicSessionOf(values),
               majorSubject: values.majorSubject.trim(),
               registrationNumber: values.registrationNumber.trim(),
               collegeRollNumber: values.collegeRollNumber.trim(),
@@ -538,12 +552,16 @@ export function StudentRegistrationForm({
         return (
           <Form className="auth-form registration-form">
             <div className="registration-progress">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <Fragment key={n}>
-                  {n > 1 && <i />}
-                  <span className={step === n ? "active" : step > n ? "complete" : ""}>{n}</span>
-                </Fragment>
-              ))}
+              {STEP_LABELS.map((label, index) => {
+                const n = index + 1;
+                const state = step === n ? "active" : step > n ? "complete" : "";
+                return (
+                  <div className="registration-step" key={label}>
+                    <span className={state}>{n}</span>
+                    <small className={state}>{label}</small>
+                  </div>
+                );
+              })}
               <b>
                 Step {step} of 5 / चरण {step} का 5
               </b>
@@ -641,17 +659,35 @@ export function StudentRegistrationForm({
                   />
                   {message("department")}
                 </label>
-                <label>
-                  Academic session / शैक्षणिक सत्र
-                  <Input
-                    name="academicSession"
-                    value={values.academicSession}
-                    onChange={handleChange}
-                    onBlur={() => setFieldTouched("academicSession", true)}
-                    placeholder="e.g. 2025-2026"
-                  />
-                  {message("academicSession")}
-                </label>
+                <fieldset className="session-range">
+                  <legend>Academic session / शैक्षणिक सत्र</legend>
+                  <div className="session-range-fields">
+                    <label>
+                      Start date / आरंभ तिथि
+                      <Input
+                        name="sessionStart"
+                        type="date"
+                        value={values.sessionStart}
+                        max={values.sessionEnd || undefined}
+                        onChange={handleChange}
+                        onBlur={() => setFieldTouched("sessionStart", true)}
+                      />
+                      {message("sessionStart")}
+                    </label>
+                    <label>
+                      End date / समाप्ति तिथि
+                      <Input
+                        name="sessionEnd"
+                        type="date"
+                        value={values.sessionEnd}
+                        min={values.sessionStart || undefined}
+                        onChange={handleChange}
+                        onBlur={() => setFieldTouched("sessionEnd", true)}
+                      />
+                      {message("sessionEnd")}
+                    </label>
+                  </div>
+                </fieldset>
                 <label>
                   Major subject / मुख्य विषय <span className="optional-label">Optional</span>
                   <Input

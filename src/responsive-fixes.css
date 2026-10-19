@@ -31,3 +31,168 @@
     height: 1.3rem;
   }
 }
+
+/* Academic session: start and end date side by side; stacked on phones */
+.session-range {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.session-range legend {
+  padding: 0;
+  margin-bottom: 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.session-range-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 0.1rem;
+}
+
+.session-range-fields label {
+  min-width: 0;
+}
+
+.session-range-fields input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .session-range-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Payment step summary: one labelled row per item; long values wrap instead of pushing past the screen */
+.payment-summary {
+  display: block;
+  padding: 0.5rem 1rem;
+  min-width: 0;
+}
+
+.payment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.payment-row > span {
+  flex: 0 0 auto;
+}
+
+.payment-row > b {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* Registration progress: five labelled columns (number, then label), no absolute labels */
+.registration-progress {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: start;
+  column-gap: 0.25rem;
+  row-gap: 0.5rem;
+  margin: 0.4rem 0 0.9rem;
+}
+
+.registration-progress .registration-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  text-align: center;
+}
+
+/* connector line between neighbouring circles */
+.registration-progress .registration-step + .registration-step::before {
+  content: "";
+  position: absolute;
+  top: 0.72rem;
+  right: calc(50% + 0.95rem);
+  left: calc(-50% + 0.95rem);
+  height: 0.1rem;
+  background: var(--border);
+  z-index: 0;
+}
+
+.registration-progress .registration-step > span,
+.registration-progress .registration-step > small {
+  position: relative;
+  z-index: 1;
+}
+
+.registration-progress .registration-step > span {
+  display: grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.67rem;
+  font-weight: 700;
+}
+
+.registration-progress .registration-step > span.active,
+.registration-progress .registration-step > span.complete {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+}
+
+.registration-progress .registration-step > small {
+  color: var(--muted);
+  font-size: 0.64rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.registration-progress .registration-step > small.active {
+  color: var(--text);
+}
+
+.registration-progress span:after {
+  content: none !important;
+}
+
+.registration-progress > b {
+  grid-column: 1 / -1;
+  margin: 0.2rem 0 0;
+  font-size: 0.65rem;
+  font-weight: 650;
+}
+
+@media (max-width: 480px) {
+  .registration-progress .registration-step > small {
+    font-size: 0.56rem;
+  }
+}
+
+/* Session dates take the full row on wider screens so the two-column fields below stay aligned */
+@media (min-width: 481px) {
+  .registration-form .session-range {
+    grid-column: 1 / -1;
+  }
+}
+
+/* A lone action button (e.g. "Complete registration") spans the row instead of half of it */
+.registration-actions > .button:only-child {
+  grid-column: 1 / -1;
+  width: 100%;
+  justify-content: center;
+}
