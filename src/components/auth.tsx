@@ -12,7 +12,7 @@ import {
   Sun,
 } from "lucide-react";
 import { Field, Form, Formik } from "formik";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import type { Theme, University } from "../types";
 import { Button } from "./ui";
 import { Popover } from "./popover";
@@ -24,7 +24,7 @@ const StudentRegistrationForm = lazy(() =>
 const ForgotPasswordFlow = lazy(() =>
   import("./components/forgot-password-flow").then((module) => ({ default: module.ForgotPasswordFlow })),
 );
-import { authApi, type AuthResponse, type StudentDetails } from "../lib/auth-api";
+import { authApi, masterDataApi, type AuthResponse, type StudentDetails } from "../lib/auth-api";
 import { toast } from "./toast";
 import { saveSession, tokenExpiry } from "../lib/session";
 import "../auth-layout.css";
@@ -305,6 +305,11 @@ function CredentialsForm({
 }
 
 export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
+  // Warm the cache while the user is still on the landing page, so the registration form's
+  // dropdowns appear without waiting. Failures are ignored here; the form retries on its own.
+  useEffect(() => {
+    void Promise.allSettled([masterDataApi.universities(), masterDataApi.districts(), masterDataApi.courses()]);
+  }, []);
   const [role, setRole] = useState<UserRole>("student");
   const [studentFlow, setStudentFlow] = useState<StudentFlow>("register");
   const [publicPage, setPublicPage] = useState<PublicPage | null>("home");

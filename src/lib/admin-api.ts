@@ -1,4 +1,5 @@
-import { request, type MasterDistrict, type MasterUniversity, type InternshipCourse, type InternshipBatch } from "./auth-api";
+import { masterDataApi, request, type MasterDistrict, type MasterUniversity, type InternshipCourse, type InternshipBatch } from "./auth-api";
+import { invalidate } from "./cache";
 
 // Admin endpoints (backend /api/admin/**, SUPER_ADMIN only). They use the signed-in admin's
 // token, which is stored by the sign-in screen. Read-only lists under /public/master are open.
@@ -46,23 +47,27 @@ export interface AdminLetter {
   studentId?: string;
 }
 
-const post = <T>(path: string, body: unknown) =>
-  request<T>(path, { method: "POST", body: JSON.stringify(body) }, true);
+// Writes clear the cached master-data lists they affect, so the next read sees the change
+const post = <T>(path: string, body: unknown, affects: string[] = []) => {
+  const result = request<T>(path, { method: "POST", body: JSON.stringify(body) }, true);
+  return result.then((value) => {
+    affects.forEach((prefix) => invalidate(prefix));
+    return value;
+  });
+};
 
 const get = <T>(path: string) => request<T>(path, undefined, true);
 
 export const adminApi = {
-  universities: () => get<AdminUniversity[]>("/public/master/universities"),
+  universities: () => masterDataApi.universities() as Promise<AdminUniversity[]>,
   createUniversity: (body: { name: string; code: string }) =>
-    post<AdminUniversity>("/admin/master/universities", body),
+    post<AdminUniversity>("/admin/master/universities", body, ["universities"]),
 
-  districts: () => get<AdminDistrict[]>("/public/master/districts"),
-  createDistrict: (body: { name: string }) => post<AdminDistrict>("/admin/master/districts", body),
+  districts: () => masterDataApi.districts() as Promise<AdminDistrict[]>,
+  createDistrict: (body: { name: string }) => post<AdminDistrict>("/admin/master/districts", body, ["districts"]),
 
   colleges: (universityId: number, districtId: number) =>
-    get<AdminCollege[]>(
-      `/public/master/colleges?universityId=${encodeURIComponent(universityId)}&districtId=${encodeURIComponent(districtId)}`,
-    ),
+    masterDataApi.colleges(universityId, districtId) as Promise<AdminCollege[]>,
   createCollege: (body: {
     universityId: number;
     districtId: number;
@@ -72,9 +77,9 @@ export const adminApi = {
     city?: string;
     state?: string;
     pincode?: string;
-  }) => post<AdminCollege>("/admin/master/colleges", body),
+  }) => post<AdminCollege>("/admin/master/colleges", body, ["colleges:"]),
 
-  courses: () => get<AdminCourse[]>("/public/master/courses"),
+  courses: () => masterDataApi.courses() as Promise<AdminCourse[]>,
   createCourse: (body: {
     name: string;
     code: string;
@@ -83,10 +88,9 @@ export const adminApi = {
     practicalDurationHours?: number;
     reportPreparationHours?: number;
     totalDurationHours?: number;
-  }) => post<AdminCourse>("/admin/master/courses", body),
+  }) => post<AdminCourse>("/admin/master/courses", body, ["courses"]),
 
-  batches: (courseId: number) =>
-    get<AdminBatch[]>(`/public/master/batches?courseId=${encodeURIComponent(courseId)}`),
+  batches: (courseId: number) => masterDataApi.batches(courseId) as Promise<AdminBatch[]>,
   createBatch: (body: {
     courseId: number;
     batchName: string;
@@ -94,7 +98,7 @@ export const adminApi = {
     endDate: string;
     fee: number;
     maxStudents?: number;
-  }) => post<AdminBatch>("/admin/master/batches", body),
+  }) => post<AdminBatch>("/admin/master/batches", body, ["batches:"]),
 
   letters: (filters: { collegeCode?: string; academicSession?: string }) => {
     const params = new URLSearchParams();

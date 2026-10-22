@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../constants/api";
+import { cached } from "./cache";
 
 export interface AuthResponse {
   token: string;
@@ -330,17 +331,21 @@ export const acceptanceLetterApi = {
     ),
 };
 
+// Public master data is cached (see lib/cache.ts); callers always get fresh-enough lists without
+// repeating the request on every screen.
 export const masterDataApi = {
   universities: () =>
-    request<MasterUniversity[]>("/public/master/universities"),
-  districts: () => request<MasterDistrict[]>("/public/master/districts"),
+    cached("universities", () => request<MasterUniversity[]>("/public/master/universities")),
+  districts: () => cached("districts", () => request<MasterDistrict[]>("/public/master/districts")),
   colleges: (universityId: number, districtId: number) =>
-    request<MasterCollege[]>(
-      `/public/master/colleges?universityId=${encodeURIComponent(universityId)}&districtId=${encodeURIComponent(districtId)}`,
+    cached(`colleges:${universityId}:${districtId}`, () =>
+      request<MasterCollege[]>(
+        `/public/master/colleges?universityId=${encodeURIComponent(universityId)}&districtId=${encodeURIComponent(districtId)}`,
+      ),
     ),
-  courses: () => request<InternshipCourse[]>("/public/master/courses"),
+  courses: () => cached("courses", () => request<InternshipCourse[]>("/public/master/courses")),
   batches: (courseId: number) =>
-    request<InternshipBatch[]>(
-      `/public/master/batches?courseId=${encodeURIComponent(courseId)}`,
+    cached(`batches:${courseId}`, () =>
+      request<InternshipBatch[]>(`/public/master/batches?courseId=${encodeURIComponent(courseId)}`),
     ),
 };
