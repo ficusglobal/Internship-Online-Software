@@ -196,3 +196,11 @@
   width: 100%;
   justify-content: center;
 }
+
+/* Shown while a screen's code is loading (lazy chunks) */
+.app-loading {
+  display: grid;
+  place-items: center;
+  min-height: 40vh;
+  width: 100%;
+}

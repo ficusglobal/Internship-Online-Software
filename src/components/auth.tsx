@@ -12,12 +12,18 @@ import {
   Sun,
 } from "lucide-react";
 import { Field, Form, Formik } from "formik";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import type { Theme, University } from "../types";
 import { Button } from "./ui";
 import { Popover } from "./popover";
-import { StudentRegistrationForm } from "./components/student-registration-form";
-import { ForgotPasswordFlow } from "./components/forgot-password-flow";
+// The registration form and password reset are only needed after the user picks them, so they
+// are fetched on demand instead of with the sign-in screen.
+const StudentRegistrationForm = lazy(() =>
+  import("./components/student-registration-form").then((module) => ({ default: module.StudentRegistrationForm })),
+);
+const ForgotPasswordFlow = lazy(() =>
+  import("./components/forgot-password-flow").then((module) => ({ default: module.ForgotPasswordFlow })),
+);
 import { authApi, type AuthResponse, type StudentDetails } from "../lib/auth-api";
 import { toast } from "./toast";
 import { saveSession, tokenExpiry } from "../lib/session";
@@ -638,7 +644,9 @@ export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
           </div>
           {detailsStep ? (
             <>
-              <StudentRegistrationForm onComplete={handleAuthResponse} />
+              <Suspense fallback={<div className="app-loading" role="status"><div className="spinner" /></div>}>
+                <StudentRegistrationForm onComplete={handleAuthResponse} />
+              </Suspense>
               <button
                 type="button"
                 className="auth-role-switch student-registration-switch"
@@ -681,14 +689,16 @@ export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
               </div>
               )}
               {resetting ? (
-                <ForgotPasswordFlow
-                  onBack={() => setResetting(false)}
-                  onDone={() => {
-                    setResetting(false);
-                    setAuthError("");
-                    toast.success("Password reset. Please sign in with your new password.");
-                  }}
-                />
+                <Suspense fallback={<div className="app-loading" role="status"><div className="spinner" /></div>}>
+                  <ForgotPasswordFlow
+                    onBack={() => setResetting(false)}
+                    onDone={() => {
+                      setResetting(false);
+                      setAuthError("");
+                      toast.success("Password reset. Please sign in with your new password.");
+                    }}
+                  />
+                </Suspense>
               ) : (
                 <CredentialsForm
                   key={`${role}-${isRegistration ? "register" : "login"}`}
@@ -710,54 +720,6 @@ export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
           <p className="auth-help">
             Need help? / मदद चाहिए? <button>Contact support</button>
           </p>
-        </div>
-      </section>
-    </main>
-  );
-}
-
-interface UniversitySelectProps {
-  universities: University[];
-  onSelect: (university: University) => void;
-  onBack: () => void;
-}
-export function UniversitySelect({
-  universities,
-  onSelect,
-  onBack,
-}: UniversitySelectProps) {
-  return (
-    <main className="university-select-page">
-      <section className="university-select-card">
-        <button className="back-button" onClick={onBack}>
-          <ChevronLeft size={17} /> Back to sign in
-        </button>
-        <div className="select-icon">
-          <Building2 size={23} />
-        </div>
-        <span className="auth-eyebrow">ADMIN WORKSPACE</span>
-        <h1>Choose a university</h1>
-        <p>
-          Select the university you want to manage. You can switch this later
-          from the panel.
-        </p>
-        <div className="university-options">
-          {universities.map((university, index) => (
-            <button
-              className="university-option"
-              key={university.id}
-              onClick={() => onSelect(university)}
-            >
-              <span className={`university-monogram tone-${index % 3}`}>
-                {university.name.slice(0, 1)}
-              </span>
-              <span>
-                <b>{university.name}</b>
-                <small>{university.city}</small>
-              </span>
-              <ArrowRight size={18} />
-            </button>
-          ))}
         </div>
       </section>
     </main>
