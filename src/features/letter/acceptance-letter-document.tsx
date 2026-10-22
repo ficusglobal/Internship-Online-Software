@@ -1,6 +1,6 @@
 import { Globe, Globe2, Mail, MapPin, Phone } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
-import { forwardRef, useEffect, useRef, useState, type ReactNode } from "react";
+import { forwardRef, memo, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   buildLetterNumber,
   formatCertificateDate,
@@ -63,7 +63,7 @@ interface AcceptanceLetterDocumentProps {
 
 // The letter and the completion certificate, each a fixed A4 canvas (794x1123px, 96dpi), so the
 // PDF export matches the preview. The preview is scaled down to fit narrow screens.
-export const AcceptanceLetterDocument = forwardRef<HTMLDivElement, AcceptanceLetterDocumentProps>(
+export const AcceptanceLetterDocument = memo(forwardRef<HTMLDivElement, AcceptanceLetterDocumentProps>(
   function AcceptanceLetterDocument({ details, studentId }, ref) {
     const frame = useRef<HTMLDivElement>(null);
     const [scale, setScale] = useState(1);
@@ -240,4 +240,5 @@ export const AcceptanceLetterDocument = forwardRef<HTMLDivElement, AcceptanceLet
       </div>
     );
   },
+  ),
 );

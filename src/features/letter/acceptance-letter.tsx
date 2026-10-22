@@ -1,5 +1,5 @@
 import { CreditCard, Download, GraduationCap, Home, LoaderCircle, LogOut, UserPlus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card } from "../../shared/components/ui";
 import { toast } from "../../shared/components/toast";
 import { AcceptanceLetterDocument } from "./acceptance-letter-document";
@@ -109,7 +109,8 @@ export function AcceptanceLetter({
 
   const studentId = details?.id || (authToken ? "" : localStorage.getItem("userId")) || "";
   // The issued letter carries the internship period and hours, which the certificate page needs
-  const letterDetails: LetterDetails = {
+  // Memoised so the printable letter does not re-render when unrelated state (e.g. "downloading") changes
+  const letterDetails = useMemo<LetterDetails>(() => ({
     ...details,
     id: studentId,
     fullName: details?.fullName || studentName,
@@ -123,7 +124,7 @@ export function AcceptanceLetter({
     totalDurationHours: letter?.totalDurationHours,
     letterNumber: letter?.letterNumber,
     acceptanceDate: letter?.generatedAt ?? details?.acceptanceDate,
-  };
+  }), [details, studentId, studentName, letter]);
   const issueDate = formatIssueDate(letter?.generatedAt);
   const needsPayment = Boolean(details?.registrationId) && !letter && !ISSUED_STATUSES.has(details?.registrationStatus ?? "");
 

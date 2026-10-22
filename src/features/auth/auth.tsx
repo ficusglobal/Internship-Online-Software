@@ -16,21 +16,20 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import type { Theme, University } from "../../types";
 import { Button } from "../../shared/components/ui";
 import { Popover } from "../../shared/components/popover";
-// The registration form and password reset are only needed after the user picks them, so they
-// are fetched on demand instead of with the sign-in screen.
-const StudentRegistrationForm = lazy(() =>
-  import("../registration/student-registration-form").then((module) => ({ default: module.StudentRegistrationForm })),
-);
-const ForgotPasswordFlow = lazy(() =>
-  import("./forgot-password-flow").then((module) => ({ default: module.ForgotPasswordFlow })),
-);
 import { authApi, masterDataApi, type AuthResponse, type StudentDetails } from "../../lib/auth-api";
 import { toast } from "../../shared/components/toast";
 import { saveSession, tokenExpiry } from "../../lib/session";
+import { preload, screens } from "../../lib/screens";
 import "../../styles/auth-layout.css";
 import "../../styles/auth-role.css";
 import "../../styles/auth-mobile-fix.css";
 import "../../styles/auth-navbar.css";
+
+// The registration form and password reset are only needed after the user picks them, so they
+// are fetched on demand (see lib/screens.ts) instead of with the sign-in screen.
+const StudentRegistrationForm = lazy(screens.registration);
+const ForgotPasswordFlow = lazy(screens.forgotPassword);
+
 
 export type UserRole = "admin" | "student" | "cyber-cafe";
 type PublicPage = "home" | "features" | "contact";
@@ -272,7 +271,7 @@ function CredentialsForm({
             </label>
           )}
           {!registration && onForgotPassword && (
-            <button type="button" className="forgot-password" onClick={onForgotPassword}>
+            <button type="button" className="forgot-password" onClick={onForgotPassword} onPointerEnter={() => preload("forgotPassword")}>
               Forgot password?
             </button>
           )}
@@ -379,6 +378,10 @@ export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
   };
   const submitCredentials = async (values: CredentialsValues) => {
     setAuthError("");
+    // Start downloading the screen this role opens next, in parallel with the sign-in request
+    if (role === "admin") preload("admin");
+    else if (role === "student") preload("studentHome", "letter");
+    else if (role === "cyber-cafe") preload("cyberCafe");
     const operation = role === "cyber-cafe" && isRegistration
       ? "Cyber cafe registration"
       : role === "cyber-cafe"
@@ -512,7 +515,7 @@ export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
           <BilingualText english={page.description} hindi={page.hindi} />
           {publicPage === "home" ? (
             <div className="public-page-actions">
-              <Button onClick={showRegister}>
+              <Button onClick={showRegister} onPointerEnter={() => preload("registration")} onFocus={() => preload("registration")}>
                 Student registration <ArrowRight size={16} />
               </Button>
               <button className="public-login-button" onClick={showLogin}>
@@ -520,7 +523,7 @@ export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
               </button>
             </div>
           ) : (
-            <Button onClick={showRegister}>
+            <Button onClick={showRegister} onPointerEnter={() => preload("registration")} onFocus={() => preload("registration")}>
               Get started <ArrowRight size={16} />
             </Button>
           )}

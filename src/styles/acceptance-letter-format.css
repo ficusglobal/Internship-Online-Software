@@ -393,3 +393,8 @@
   height: auto;
   opacity: 0.92;
 }
+
+/* styles.css sets a global table min-width (for the admin tables); the fixed-width certificate must not inherit it */
+.fg-cert-table {
+  min-width: 0;
+}

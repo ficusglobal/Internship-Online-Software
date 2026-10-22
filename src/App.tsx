@@ -1,23 +1,17 @@
-import { lazy, Suspense, useEffect, useState, type ComponentType } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { SignIn, type UserRole } from "./features/auth/auth";
 import { ToastViewport } from "./shared/components/toast";
 import { clearSession, loadSession } from "./lib/session";
 import type { StudentDetails } from "./lib/auth-api";
 import type { Theme } from "./types";
+import { screens } from "./lib/screens";
 
-// Each screen is its own chunk: a visitor only downloads the screen they open. Sign-in stays
-// eager because it is the first screen everyone sees.
-const lazyNamed = <K extends string>(load: () => Promise<Record<K, ComponentType<any>>>, name: K) =>
-  lazy(() => load().then((module) => ({ default: module[name] })));
-
-const AdminDashboard = lazyNamed(() => import("./features/admin/admin-dashboard"), "AdminDashboard");
-const AcceptanceLetter = lazyNamed(() => import("./features/letter/acceptance-letter"), "AcceptanceLetter");
-const StudentHome = lazyNamed(() => import("./features/student/student-home"), "StudentHome");
-const CyberCafeWorkspace = lazyNamed(() => import("./features/cyber-cafe/cyber-cafe-workspace"), "CyberCafeWorkspace");
-const AcceptanceLetterVerification = lazyNamed(
-  () => import("./features/letter/acceptance-letter-verification"),
-  "AcceptanceLetterVerification",
-);
+// Each screen is its own chunk (see lib/screens.ts). Sign-in stays eager: it is the first screen everyone sees.
+const AdminDashboard = lazy(screens.admin);
+const AcceptanceLetter = lazy(screens.letter);
+const StudentHome = lazy(screens.studentHome);
+const CyberCafeWorkspace = lazy(screens.cyberCafe);
+const AcceptanceLetterVerification = lazy(screens.verification);
 
 type AppStage = "sign-in" | "student-home" | "acceptance-letter" | "cyber-cafe" | "admin-dashboard";
 
