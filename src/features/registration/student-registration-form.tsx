@@ -154,6 +154,10 @@ const validate = (values: RegistrationValues) => {
   return errors;
 };
 
+// Keeps only the 10 digits of a mobile number. A pasted "+91" country prefix is dropped first,
+// so "+91 98765-43210" becomes "9876543210" instead of "9198765432".
+const mobileDigits = (raw: string) => raw.trim().replace(/^\+91/, "").replace(/\D/g, "").slice(0, 10);
+
 const RESEND_SECONDS = 60;
 
 const STEP_LABELS = ["Details", "Internship", "Review", "Verify email", "Payment"];
@@ -616,7 +620,8 @@ export function StudentRegistrationForm({
                     inputMode="numeric"
                     maxLength={10}
                     value={values.mobileNo}
-                    onChange={handleChange}
+                    // Digits only: letters and symbols are dropped as they are typed or pasted
+                    onChange={(event) => setFieldValue("mobileNo", mobileDigits(event.target.value))}
                     onBlur={() => setFieldTouched("mobileNo", true)}
                   />
                   {message("mobileNo")}
