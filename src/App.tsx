@@ -11,6 +11,7 @@ import { Settings, type UniversitySetupValues } from "./components/settings";
 import { StudentForm } from "./components/student-form";
 import { SignIn, UniversitySelect, type UserRole } from "./components/auth";
 import { AcceptanceLetter } from "./components/acceptance-letter";
+import { AdminDashboard } from "./components/admin-dashboard";
 import { StudentHome } from "./components/student-home";
 import { clearSession, loadSession } from "./lib/session";
 import { AcceptanceLetterVerification } from "./components/acceptance-letter-verification";
@@ -22,13 +23,13 @@ import type { College, InternshipTopic, MasterConfiguration, Student, Theme, Uni
 import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
 
 const headings: Record<string, [string,string]> = { dashboard: ["Good morning, Priya", "Here's what's happening across your internship programs."], students: ["Students", "Manage registrations, learner profiles, and assignments."], attendance: ["Attendance", "Record and review daily learner attendance."], payments: ["Payments", "Verify transactions and manage learner payments."], internships: ["Internships", "Monitor milestones from registration to certification."], courses: ["Courses", "Manage internship topics, courses, fees and student resources."], settings: ["University", "Manage university, college, course, and batch master data."] };
-type AppStage = "sign-in" | "university-select" | "student-home" | "acceptance-letter" | "cyber-cafe" | "panel";
+type AppStage = "sign-in" | "university-select" | "student-home" | "acceptance-letter" | "cyber-cafe" | "admin-dashboard" | "panel";
 
 // A saved session (see lib/session.ts) brings the user back to their screen after a reload
 function stageFor(role: UserRole): AppStage {
   if (role === "student") return "student-home";
   if (role === "cyber-cafe") return "cyber-cafe";
-  return "panel";
+  return "admin-dashboard";
 }
 
 function VerificationRoute() {
@@ -53,6 +54,7 @@ function AppContent() {
   const [editing, setEditing] = useState<Student | null>(null);
   const [present, setPresent] = useState(new Set<string>());
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [adminName, setAdminName] = useState(restored?.role === "admin" ? restored.name : "");
   const [authenticatedStudentName, setAuthenticatedStudentName] = useState(
     restored?.role === "student" ? restored.name : "",
   );
@@ -160,7 +162,8 @@ function AppContent() {
             } else if (nextRole === "cyber-cafe") {
               setStage("cyber-cafe");
             } else if (nextRole === "admin") {
-              setStage("university-select");
+              setAdminName(name || "Administrator");
+              setStage("admin-dashboard");
             } else {
               setStage("panel");
             }
@@ -202,6 +205,15 @@ function AppContent() {
     return (
       <>
         <CyberCafeWorkspace onLogout={logout} />
+        <ToastViewport />
+      </>
+    );
+  }
+
+  if (stage === "admin-dashboard") {
+    return (
+      <>
+        <AdminDashboard name={adminName || "Administrator"} onLogout={logout} />
         <ToastViewport />
       </>
     );

@@ -362,7 +362,7 @@ export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
     toast.success(successMessage ?? "Authentication completed successfully.");
     onAuthenticated(
       role,
-      response.role === "STUDENT" ? response.name : undefined,
+      response.name,
       registration,
     );
   };

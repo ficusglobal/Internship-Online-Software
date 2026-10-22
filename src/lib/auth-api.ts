@@ -185,17 +185,22 @@ interface MessageResult {
 }
 
 export class ApiError extends Error {
+  // Per-field messages from the backend's validation response (field name -> message)
+  readonly fieldErrors: Record<string, string>;
+
   constructor(
     message: string,
     readonly status: number,
+    fieldErrors: Record<string, string> = {},
   ) {
     super(message);
+    this.fieldErrors = fieldErrors;
   }
 }
 
 // Auth is opt-in: public endpoints (login, registration, master data) never
 // send a token. `auth: true` uses the stored session token; a string uses that token.
-async function request<T>(
+export async function request<T>(
   path: string,
   init?: RequestInit,
   auth: boolean | string = false,
@@ -228,6 +233,7 @@ async function request<T>(
         apiError?.message ??
         "Unable to complete your request. Please try again.",
       response.status,
+      apiError?.validationErrors ?? {},
     );
   }
   return payload as T;
