@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { LoaderCircle, Plus } from "lucide-react";
-import { adminApi, type AdminBatch, type AdminCollege, type AdminCourse, type AdminDistrict, type AdminLetter, type AdminUniversity } from "../lib/admin-api";
-import { ApiError } from "../lib/auth-api";
-import { toast } from "./toast";
-import { Button, Input } from "./ui";
+import { adminApi, type AdminBatch, type AdminCollege, type AdminCourse, type AdminDistrict, type AdminLetter, type AdminUniversity } from "../../lib/admin-api";
+import { ApiError } from "../../lib/auth-api";
+import { toast } from "../../shared/components/toast";
+import { Button, Input } from "../../shared/components/ui";
 
 export type FieldErrors = Record<string, string>;
 

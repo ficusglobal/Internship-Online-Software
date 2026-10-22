@@ -10,10 +10,10 @@ import {
   LETTER_WIDTH,
   verificationUrl,
   type LetterDetails,
-} from "../lib/acceptance-letter";
-import "../acceptance-letter-format.css";
-import signatureUrl from "../assets/signature.png";
-import stampUrl from "../assets/stamp.png";
+} from "../../lib/acceptance-letter";
+import "../../styles/acceptance-letter-format.css";
+import signatureUrl from "../../assets/signature.png";
+import stampUrl from "../../assets/stamp.png";
 
 // Both waves live in one full-page SVG used as a background image: html2canvas
 // renders background images reliably, unlike multiple inline SVGs.

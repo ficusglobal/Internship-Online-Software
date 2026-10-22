@@ -1,9 +1,9 @@
 import { BookOpen, Building2, CalendarCheck, CreditCard, FileText, GraduationCap, Landmark, LayoutDashboard, LogOut, Menu, Settings, ShieldCheck, Users, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { adminApi, type AdminDistrict, type AdminUniversity } from "../lib/admin-api";
+import { adminApi, type AdminDistrict, type AdminUniversity } from "../../lib/admin-api";
 import { AdministratorsSection, CollegesSection, CoursesSection, describeError, LettersSection, MastersSection } from "./admin-sections";
-import { Button } from "./ui";
-import "../admin-dashboard.css";
+import { Button } from "../../shared/components/ui";
+import "../../styles/admin-dashboard.css";
 
 type Section = "overview" | "colleges" | "courses" | "masters" | "letters" | "administrators";
 

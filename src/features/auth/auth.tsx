@@ -13,24 +13,24 @@ import {
 } from "lucide-react";
 import { Field, Form, Formik } from "formik";
 import { lazy, Suspense, useEffect, useState } from "react";
-import type { Theme, University } from "../types";
-import { Button } from "./ui";
-import { Popover } from "./popover";
+import type { Theme, University } from "../../types";
+import { Button } from "../../shared/components/ui";
+import { Popover } from "../../shared/components/popover";
 // The registration form and password reset are only needed after the user picks them, so they
 // are fetched on demand instead of with the sign-in screen.
 const StudentRegistrationForm = lazy(() =>
-  import("./components/student-registration-form").then((module) => ({ default: module.StudentRegistrationForm })),
+  import("../registration/student-registration-form").then((module) => ({ default: module.StudentRegistrationForm })),
 );
 const ForgotPasswordFlow = lazy(() =>
-  import("./components/forgot-password-flow").then((module) => ({ default: module.ForgotPasswordFlow })),
+  import("./forgot-password-flow").then((module) => ({ default: module.ForgotPasswordFlow })),
 );
-import { authApi, masterDataApi, type AuthResponse, type StudentDetails } from "../lib/auth-api";
-import { toast } from "./toast";
-import { saveSession, tokenExpiry } from "../lib/session";
-import "../auth-layout.css";
-import "../auth-role.css";
-import "../auth-mobile-fix.css";
-import "../auth-navbar.css";
+import { authApi, masterDataApi, type AuthResponse, type StudentDetails } from "../../lib/auth-api";
+import { toast } from "../../shared/components/toast";
+import { saveSession, tokenExpiry } from "../../lib/session";
+import "../../styles/auth-layout.css";
+import "../../styles/auth-role.css";
+import "../../styles/auth-mobile-fix.css";
+import "../../styles/auth-navbar.css";
 
 export type UserRole = "admin" | "student" | "cyber-cafe";
 type PublicPage = "home" | "features" | "contact";

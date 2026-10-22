@@ -1,8 +1,8 @@
 import { Award, BookOpen, CalendarCheck, FileText, GraduationCap, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
-import { acceptanceLetterApi, ApiError, authApi, type AcceptanceLetter } from "../lib/auth-api";
-import { Button } from "./ui";
-import "../student-home.css";
+import { acceptanceLetterApi, ApiError, authApi, type AcceptanceLetter } from "../../lib/auth-api";
+import { Button } from "../../shared/components/ui";
+import "../../styles/student-home.css";
 
 interface StudentHomeProps {
   name: string;

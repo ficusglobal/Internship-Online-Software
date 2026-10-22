@@ -1,10 +1,10 @@
 import { Building2, GraduationCap, LogOut } from "lucide-react";
 import { useState } from "react";
-import { AcceptanceLetter } from "./acceptance-letter";
-import { StudentRegistrationForm } from "./components/student-registration-form";
-import { toast } from "./toast";
-import { Button } from "./ui";
-import type { StudentDetails } from "../lib/auth-api";
+import { AcceptanceLetter } from "../letter/acceptance-letter";
+import { StudentRegistrationForm } from "../registration/student-registration-form";
+import { toast } from "../../shared/components/toast";
+import { Button } from "../../shared/components/ui";
+import type { StudentDetails } from "../../lib/auth-api";
 
 interface CyberCafeWorkspaceProps {
   onLogout: () => void;

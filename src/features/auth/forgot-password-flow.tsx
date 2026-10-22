@@ -7,9 +7,9 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { passwordResetApi } from "../../lib/auth-api";
-import { toast } from "../toast";
-import { Button, Input } from "../ui";
-import "../../email-verification.css";
+import { toast } from "../../shared/components/toast";
+import { Button, Input } from "../../shared/components/ui";
+import "../../styles/email-verification.css";
 
 type Stage = "email" | "reset";
 

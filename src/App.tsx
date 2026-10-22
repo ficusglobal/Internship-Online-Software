@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState, type ComponentType } from "react";
-import { SignIn, type UserRole } from "./components/auth";
-import { ToastViewport } from "./components/toast";
+import { SignIn, type UserRole } from "./features/auth/auth";
+import { ToastViewport } from "./shared/components/toast";
 import { clearSession, loadSession } from "./lib/session";
 import type { StudentDetails } from "./lib/auth-api";
 import type { Theme } from "./types";
@@ -10,12 +10,12 @@ import type { Theme } from "./types";
 const lazyNamed = <K extends string>(load: () => Promise<Record<K, ComponentType<any>>>, name: K) =>
   lazy(() => load().then((module) => ({ default: module[name] })));
 
-const AdminDashboard = lazyNamed(() => import("./components/admin-dashboard"), "AdminDashboard");
-const AcceptanceLetter = lazyNamed(() => import("./components/acceptance-letter"), "AcceptanceLetter");
-const StudentHome = lazyNamed(() => import("./components/student-home"), "StudentHome");
-const CyberCafeWorkspace = lazyNamed(() => import("./components/cyber-cafe-workspace"), "CyberCafeWorkspace");
+const AdminDashboard = lazyNamed(() => import("./features/admin/admin-dashboard"), "AdminDashboard");
+const AcceptanceLetter = lazyNamed(() => import("./features/letter/acceptance-letter"), "AcceptanceLetter");
+const StudentHome = lazyNamed(() => import("./features/student/student-home"), "StudentHome");
+const CyberCafeWorkspace = lazyNamed(() => import("./features/cyber-cafe/cyber-cafe-workspace"), "CyberCafeWorkspace");
 const AcceptanceLetterVerification = lazyNamed(
-  () => import("./components/acceptance-letter-verification"),
+  () => import("./features/letter/acceptance-letter-verification"),
   "AcceptanceLetterVerification",
 );
 

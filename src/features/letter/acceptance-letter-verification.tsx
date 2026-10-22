@@ -1,7 +1,7 @@
 import { CheckCircle2, LoaderCircle, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Card } from "./ui";
-import { ApiError, authApi, type StudentDetails } from "../lib/auth-api";
+import { Card } from "../../shared/components/ui";
+import { ApiError, authApi, type StudentDetails } from "../../lib/auth-api";
 
 interface AcceptanceLetterVerificationProps {
   studentId: string;

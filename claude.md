@@ -16,22 +16,24 @@ cyber-cafe assisted registration, acceptance letters with QR verification, and a
 - Both are read in `src/constants/api.ts`.
 
 ## Layout
-- `src/App.tsx` — router + stage machine. Routes: `/student/acceptance-letter/:studentId` (public QR verification) and `*` (app).
+- `src/App.tsx` — stage machine (no router; the verification path is matched by pathname). Paths: `/student/acceptance-letter/:studentId` (public QR verification) and `*` (app).
   Stages: `sign-in` → `acceptance-letter` (student) | `cyber-cafe` (cafe) | `university-select` → `panel` (admin).
   Sessions survive a reload: `lib/session.ts` stores the role, name and token expiry (`authSession`) next to `authToken`; an expired token signs the user out. `logout()` clears them.
-- `src/components/auth.tsx` — public landing, role picker, login/registration screens (`SignIn`), `UniversitySelect`.
-- `src/components/components/student-registration-form.tsx` — 4-step student registration (details → internship/account → review → pay).
+- `src/features/auth/auth.tsx` — public landing, role picker, login/registration screens (`SignIn`). `forgot-password-flow.tsx` (same folder) is the student reset.
+- `src/features/registration/student-registration-form.tsx` — 4-step student registration (details → internship/account → review → pay).
   `mode="self" | "cyber-cafe"`. Calls `onComplete(response, message, snapshot)`.
-- `src/components/cyber-cafe-workspace.tsx` — signed-in cafe registers students, then sees/downloads that student's letter.
-- `src/components/acceptance-letter.tsx` — acceptance letter page (preview + Download + details sidebar), used by students and cafes.
-- `src/components/acceptance-letter-document.tsx` — the printable A4 letter (794×1123px) incl. verification QR.
-- `src/components/acceptance-letter-verification.tsx` — QR landing page; shows TRUE/FALSE.
+- `src/features/cyber-cafe/cyber-cafe-workspace.tsx` — signed-in cafe registers students, then sees/downloads that student's letter.
+- `src/features/letter/acceptance-letter.tsx` — acceptance letter page (preview + Download + details sidebar), used by students and cafes.
+- `src/features/letter/acceptance-letter-document.tsx` — the printable A4 letter (794×1123px) incl. verification QR.
+- `src/features/letter/acceptance-letter-verification.tsx` — QR landing page; shows TRUE/FALSE.
 - `src/lib/auth-api.ts` — fetch wrapper (`request`, throws `ApiError` with `status`), `authApi`, `masterDataApi`, DTO types.
   Bearer token is **opt-in** per call (`request(path, init, auth)`): login, registration and `/public/master/*` send none;
   only `/student/me` and `/student/{id}` send it (`auth: true` = stored token, string = explicit token).
 - `src/lib/payment.ts` — Razorpay Checkout loader + `collectPayment()`.
 - `src/lib/acceptance-letter.ts` — letter number/date formatting, verification URL, PDF export.
-- `src/lib/storage.ts`, `src/data/seed.ts` — localStorage-backed demo data for the admin panel (not the backend).
+- `src/features/student/student-home.tsx`, `src/features/admin/admin-dashboard.tsx` (+ `admin-sections.tsx`) — student home and the live admin dashboard.
+- `src/lib/cache.ts` — 5-minute cache for public master data; admin writes clear their lists.
+- Shared UI in `src/shared/components/`; all global CSS in `src/styles/`. Screens are lazy-loaded (`App.tsx`).
 - Styles are global CSS files imported from `main.tsx`/components (`styles.css` is minified; add new styles in separate files,
   e.g. `acceptance-letter.css`). Theme tokens: `--bg --surface --soft --border --text --muted --purple* --shadow`.
 
@@ -62,7 +64,7 @@ Sign-in → "Forgot password?" → `ForgotPasswordFlow`: `POST /auth/password/fo
 Success returns to sign-in.
 
 ### Student login
-Login → stage `student-home` (`components/student-home.tsx`: letter status and option cards; certificate, course and attendance are "Coming soon"). The acceptance letter opens from its card → `GET /student/me` → `GET /acceptance-letters/me`. If the registration is paid and no
+Login → stage `student-home` (`features/student/student-home.tsx`: letter status and option cards; certificate, course and attendance are "Coming soon"). The acceptance letter opens from its card → `GET /student/me` → `GET /acceptance-letters/me`. If the registration is paid and no
 letter exists yet, `POST /acceptance-letters/registrations/{registrationId}` issues it (idempotent).
 
 ### Acceptance letter
@@ -102,5 +104,5 @@ letter exists yet, `POST /acceptance-letters/registrations/{registrationId}` iss
 
 ## Conventions
 - Formik for forms, lucide-react icons, bilingual (English / Hindi) copy on student-facing screens.
-- `toast.success/error` from `components/toast.tsx` for feedback; there is no `toast.info`.
+- `toast.success/error` from `shared/components/toast.tsx` for feedback; there is no `toast.info`.
 - `qrcode.react` v4 has only named exports (`QRCodeCanvas`, `QRCodeSVG`) — no default import.

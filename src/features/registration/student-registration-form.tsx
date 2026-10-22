@@ -24,10 +24,10 @@ import {
   confirmRegistrationPayment,
   type ConfirmedPayment,
 } from "../../lib/registration-payment";
-import { DropdownSelector } from "../dropdown-selector";
-import { toast } from "../toast";
-import { Button, Input } from "../ui";
-import "../../email-verification.css";
+import { DropdownSelector } from "../../shared/components/dropdown-selector";
+import { toast } from "../../shared/components/toast";
+import { Button, Input } from "../../shared/components/ui";
+import "../../styles/email-verification.css";
 
 interface RegistrationValues {
   fullName: string;

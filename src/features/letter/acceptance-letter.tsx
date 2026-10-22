@@ -1,19 +1,19 @@
 import { CreditCard, Download, GraduationCap, Home, LoaderCircle, LogOut, UserPlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Button, Card } from "./ui";
-import { toast } from "./toast";
+import { Button, Card } from "../../shared/components/ui";
+import { toast } from "../../shared/components/toast";
 import { AcceptanceLetterDocument } from "./acceptance-letter-document";
 import {
   acceptanceLetterApi,
   ApiError,
   authApi,
   type AcceptanceLetter as IssuedLetter,
-} from "../lib/auth-api";
-import { buildLetterNumber, downloadLetterPdf, type LetterDetails } from "../lib/acceptance-letter";
-import { PaymentCancelledError } from "../lib/payment";
-import { checkoutRegistration, confirmRegistrationPayment } from "../lib/registration-payment";
-import { formatCurrency } from "../lib/utils";
-import "../letter-number.css";
+} from "../../lib/auth-api";
+import { buildLetterNumber, downloadLetterPdf, type LetterDetails } from "../../lib/acceptance-letter";
+import { PaymentCancelledError } from "../../lib/payment";
+import { checkoutRegistration, confirmRegistrationPayment } from "../../lib/registration-payment";
+import { formatCurrency } from "../../lib/utils";
+import "../../styles/letter-number.css";
 
 interface AcceptanceLetterProps {
   studentName?: string;

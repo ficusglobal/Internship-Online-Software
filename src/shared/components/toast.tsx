@@ -1,6 +1,6 @@
 import { CheckCircle2, CircleAlert, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import "../toast.css";
+import "../../styles/toast.css";
 
 export type ToastType = "success" | "error";
 export interface ToastItem { id: number; type: ToastType; message: string; }
