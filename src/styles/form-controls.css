@@ -12,6 +12,30 @@
   color: var(--text);
 }
 
+/* The field fills the row next to its icon instead of keeping the browser's ~20ch default width */
+.auth-input .input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+
+.auth-api-error {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid color-mix(in srgb, #e5484d 40%, transparent);
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, #e5484d 10%, transparent);
+  color: #e5484d;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+[data-theme="dark"] .auth-api-error {
+  color: #ff8a8d;
+}
+
 .input::placeholder {
   color: var(--muted);
   opacity: 1;
