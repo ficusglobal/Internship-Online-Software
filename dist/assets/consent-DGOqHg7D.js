@@ -1,0 +1,6 @@
+import{c as r}from"./index-CznLddPK.js";/**
+ * @license lucide-react v0.460.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const p=r("Eye",[["path",{d:"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",key:"1nclc0"}],["circle",{cx:"12",cy:"12",r:"3",key:"1v7zrd"}]]),c=5,d=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png",s=[[37,80,68,70],[255,216,255],[137,80,78,71,13,10,26,10]];async function f(e){if(e.size===0)return"The selected file is empty. / चुनी गई फ़ाइल खाली है।";if(e.size>c*1024*1024)return`The file is too large. Maximum size is ${c} MB. / फ़ाइल ${c} MB से बड़ी है।`;const n=new Uint8Array(await e.slice(0,8).arrayBuffer());return s.some(t=>t.every((i,a)=>n[a]===i))?"":"Only PDF, JPG or PNG files are allowed. / केवल PDF, JPG या PNG फ़ाइल।"}function w(e){return!!(e!=null&&e.consentUploaded)&&(e==null?void 0:e.consentStatus)!=="REJECTED"}async function E(e){const n=window.open("","_blank");try{const o=URL.createObjectURL(await e());if(n)n.opener=null,n.location.href=o;else{const t=document.createElement("a");t.href=o,t.download="consent-letter",t.click()}window.setTimeout(()=>URL.revokeObjectURL(o),6e4)}catch(o){throw n==null||n.close(),o}}export{d as C,p as E,c as a,f as b,w as c,E as o};

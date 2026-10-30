@@ -8,12 +8,18 @@ import {
   ApiError,
   authApi,
   type AcceptanceLetter as IssuedLetter,
+  type ConsentSummary,
 } from "../../lib/auth-api";
 import { buildLetterNumber, downloadLetterPdf, type LetterDetails } from "../../lib/acceptance-letter";
+import { consentReady } from "../../lib/consent";
 import { PaymentCancelledError } from "../../lib/payment";
 import { checkoutRegistration, confirmRegistrationPayment } from "../../lib/registration-payment";
 import { formatCurrency } from "../../lib/utils";
+import { ConsentUpload } from "../consent/consent-upload";
+import { EmailOtp } from "../registration/email-otp";
+import { WhatsappGroupCard } from "../student/whatsapp-group-card";
 import "../../styles/letter-number.css";
+import "../../styles/consent.css";
 
 interface AcceptanceLetterProps {
   studentName?: string;
@@ -29,6 +35,10 @@ interface AcceptanceLetterProps {
 
 // The letter is issued by the backend once payment is confirmed (ENROLLED or later)
 const ISSUED_STATUSES = new Set(["ENROLLED", "IN_PROGRESS", "COMPLETED"]);
+
+// create-order refuses an unverified email with this message (PaymentService.createOrder)
+const isEmailNotVerified = (err: unknown) =>
+  err instanceof ApiError && err.status === 400 && /verify the student's email/i.test(err.message);
 
 // Returns the issued letter, or null while the registration is not paid yet.
 // A paid registration whose letter has not been issued yet gets it now (idempotent on the backend).
@@ -73,6 +83,9 @@ export function AcceptanceLetter({
   const [error, setError] = useState("");
   const [downloading, setDownloading] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [consent, setConsent] = useState<ConsentSummary | null>(null);
+  // Shown when the payment is refused because the email was never verified
+  const [needsEmail, setNeedsEmail] = useState(false);
   const letterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -126,11 +139,14 @@ export function AcceptanceLetter({
     acceptanceDate: letter?.generatedAt ?? details?.acceptanceDate,
   }), [details, studentId, studentName, letter]);
   const issueDate = formatIssueDate(letter?.generatedAt);
-  const needsPayment = Boolean(details?.registrationId) && !letter && !ISSUED_STATUSES.has(details?.registrationStatus ?? "");
+  const registrationId = details?.registrationId;
+  const paid = Boolean(letter) || ISSUED_STATUSES.has(details?.registrationStatus ?? "");
+  const cancelled = details?.registrationStatus === "CANCELLED";
+  const needsPayment = Boolean(registrationId) && !paid && !cancelled;
 
   // Pays the registration from this page (used when the student left the form before paying)
   const payNow = async () => {
-    if (!details?.registrationId) return;
+    if (!details?.registrationId || !consentReady(consent)) return;
     const token = authToken ?? localStorage.getItem("authToken") ?? undefined;
     setPaying(true);
     try {
@@ -153,6 +169,9 @@ export function AcceptanceLetter({
     } catch (err) {
       if (err instanceof PaymentCancelledError) {
         toast.error("Payment cancelled. You can pay again from this page.");
+      } else if (isEmailNotVerified(err)) {
+        setNeedsEmail(true);
+        toast.error("Verify the email address first. A code can be sent to it below.");
       } else {
         toast.error(err instanceof Error ? err.message : "Payment could not be completed.");
       }
@@ -270,6 +289,13 @@ export function AcceptanceLetter({
             )}
           </Card>
 
+          {registrationId && !cancelled && (
+            <Card className="info-card">
+              <h3>Consent letter / सहमति पत्र</h3>
+              <ConsentUpload registrationId={registrationId} authToken={authToken} onChange={setConsent} />
+            </Card>
+          )}
+
           {needsPayment && (
             <Card className="info-card letter-payment-card">
               <h3>Complete payment / भुगतान पूरा करें</h3>
@@ -277,7 +303,26 @@ export function AcceptanceLetter({
                 Your registration is saved. Pay the internship fee to finish registration and receive your
                 acceptance letter.
               </p>
-              <Button onClick={() => void payNow()} disabled={paying}>
+              {!consentReady(consent) && (
+                <p className="letter-payment-blocked">
+                  Upload the consent letter above to open the payment. / भुगतान के लिए पहले सहमति पत्र अपलोड करें।
+                </p>
+              )}
+              {needsEmail && details?.email && (
+                <div className="letter-email-verify">
+                  <p>
+                    Verify <b>{details.email}</b> with the 6-digit code, then pay. / ईमेल सत्यापित करें, फिर भुगतान करें।
+                  </p>
+                  <EmailOtp
+                    email={details.email}
+                    onVerified={() => {
+                      setNeedsEmail(false);
+                      toast.success("Email verified. You can pay now.");
+                    }}
+                  />
+                </div>
+              )}
+              <Button onClick={() => void payNow()} disabled={paying || needsEmail || !consentReady(consent)}>
                 {paying ? <LoaderCircle className="spin" size={16} /> : <CreditCard size={16} />}
                 {paying
                   ? "Processing…"
@@ -287,6 +332,8 @@ export function AcceptanceLetter({
               </Button>
             </Card>
           )}
+
+          {registrationId && paid && <WhatsappGroupCard registrationId={registrationId} authToken={authToken} />}
 
           <Card className="info-card">
             <h3>Student Details</h3>

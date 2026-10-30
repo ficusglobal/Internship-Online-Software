@@ -6,4 +6,5 @@ import "./styles/registration-api.css";
 import "./styles/acceptance-letter.css";
 import "./styles/student-home.css";
 import "./styles/responsive-fixes.css";
+import "./styles/form-controls.css";
 createRoot(document.getElementById("root")!).render(<StrictMode><App /></StrictMode>);

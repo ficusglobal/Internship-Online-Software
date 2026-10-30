@@ -17,22 +17,32 @@ cyber-cafe assisted registration, acceptance letters with QR verification, and a
 
 ## Layout
 - `src/App.tsx` — stage machine (no router; the verification path is matched by pathname). Paths: `/student/acceptance-letter/:studentId` (public QR verification) and `*` (app).
-  Stages: `sign-in` → `acceptance-letter` (student) | `cyber-cafe` (cafe) | `university-select` → `panel` (admin).
-  Sessions survive a reload: `lib/session.ts` stores the role, name and token expiry (`authSession`) next to `authToken`; an expired token signs the user out. `logout()` clears them.
+  Stages: `sign-in` → `student-home` / `acceptance-letter` (student) | `cyber-cafe` (cafe) | `admin-dashboard` (admin).
+  Sessions survive a reload: `lib/session.ts` stores the role, the backend role (`accountRole`), name and token expiry (`authSession`)
+  next to `authToken`; an expired token signs the user out. The JWT carries no role claim, so an admin session saved without
+  `accountRole` is discarded (sign in again). `logout()` clears them.
 - `src/features/auth/auth.tsx` — public landing, role picker, login/registration screens (`SignIn`). `forgot-password-flow.tsx` (same folder) is the student reset.
-- `src/features/registration/student-registration-form.tsx` — 4-step student registration (details → internship/account → review → pay).
-  `mode="self" | "cyber-cafe"`. Calls `onComplete(response, message, snapshot)`.
+- `src/features/registration/student-registration-form.tsx` — 6-step student registration
+  (details → internship/account → review (creates the account) → verify email → consent letter → pay).
+  `mode="self" | "cyber-cafe"`. Calls `onComplete(response, message, snapshot)`. `email-otp.tsx` (same folder) is the code box.
+- `src/features/consent/consent-upload.tsx` — consent letter status/upload/view, used by the form (step 5) and the letter page.
+  `lib/consent.ts` mirrors the backend file rules (PDF/JPG/PNG by magic bytes, ≤ 5 MB) and `consentReady()`.
 - `src/features/cyber-cafe/cyber-cafe-workspace.tsx` — signed-in cafe registers students, then sees/downloads that student's letter.
 - `src/features/letter/acceptance-letter.tsx` — acceptance letter page (preview + Download + details sidebar), used by students and cafes.
 - `src/features/letter/acceptance-letter-document.tsx` — the printable A4 letter (794×1123px) incl. verification QR.
 - `src/features/letter/acceptance-letter-verification.tsx` — QR landing page; shows TRUE/FALSE.
 - `src/lib/auth-api.ts` — fetch wrapper (`request`, throws `ApiError` with `status`), `authApi`, `masterDataApi`, DTO types.
-  Bearer token is **opt-in** per call (`request(path, init, auth)`): login, registration and `/public/master/*` send none;
-  only `/student/me` and `/student/{id}` send it (`auth: true` = stored token, string = explicit token).
+  Bearer token is **opt-in** per call (`request(path, init, auth)`): login, registration, OTP and `/public/master/*` send none;
+  `/student/**`, `/payment/**`, `/acceptance-letters/**` and `/admin/**` send it (`auth: true` = stored token, string = explicit token).
+  A `FormData` body is sent as multipart; `requestBlob` downloads files (consent letter). Also `consentApi`, `whatsappGroupApi`.
 - `src/lib/payment.ts` — Razorpay Checkout loader + `collectPayment()`.
 - `src/lib/acceptance-letter.ts` — letter number/date formatting, verification URL, PDF export.
-- `src/features/student/student-home.tsx`, `src/features/admin/admin-dashboard.tsx` (+ `admin-sections.tsx`) — student home and the live admin dashboard.
-- `src/lib/cache.ts` — 5-minute cache for public master data; admin writes clear their lists.
+- `src/features/student/student-home.tsx` — student home (status, "My details" from `/student/me`, option cards).
+  `whatsapp-group-card.tsx` (same folder) shows the group link on the letter page once paid.
+- `src/features/admin/admin-dashboard.tsx` — admin shell, sections gated by role (see RBAC). Sections: `admin-sections.tsx`
+  (colleges, courses & batches, universities & districts, letters, administrators), `admin-consents.tsx`, `admin-whatsapp.tsx`,
+  `admin-students.tsx`; shared form/table helpers in `admin-ui.tsx`. API in `src/lib/admin-api.ts`.
+- `src/lib/cache.ts` — 5-minute cache for public master data; admin writes clear the public lists they affect.
 - Shared UI in `src/shared/components/`; all global CSS in `src/styles/`. Screens are lazy-loaded (`App.tsx`).
 - Styles are global CSS files imported from `main.tsx`/components (`styles.css` is minified; add new styles in separate files,
   e.g. `acceptance-letter.css`). Theme tokens: `--bg --surface --soft --border --text --muted --purple* --shadow`.
@@ -41,15 +51,15 @@ cyber-cafe assisted registration, acceptance letters with QR verification, and a
 
 ### Student self-registration
 1. Home → "Student registration" → `StudentRegistrationForm` (mode `self`).
-2. Step 2: the email field has a **Verify** button → `POST /auth/register/email/send-otp` (pre-account, keyed by email) →
-   OTP box → "Submit OTP" → `POST /auth/register/email/verify-otp`. Continuing past step 2 requires a verified email.
-   The verification is good for 30 minutes and is used up by the registration.
-3. Step 4 "Pay ₹X & register": `POST /auth/register/student` creates the account first (REGISTERED), then
-   `GET /student/me` gives `registrationId` → `POST /payment/create-order` → Razorpay Checkout with that `order_id`
-   (`checkoutRegistration`) → `POST /payment/verify` (backend checks the signature → ENROLLED).
-   A cancelled payment keeps the account: the form says so and the student can pay from the letter page ("Complete payment").
-   If a later step fails, the state is kept, so the retry does not register or charge again.
-4. Token stored in localStorage (`authToken`, `userId`) → stage `acceptance-letter`.
+2. Step 3 "Create account": `POST /auth/register/student` creates the account (REGISTERED); the backend emails a 6-digit code.
+3. Step 4: `POST /auth/email/verify-otp` (resend: `/auth/email/send-otp`, 60 s cooldown, 10 min expiry, 5 attempts).
+4. Step 5: `GET /student/me` gives `registrationId` → consent letter upload
+   `POST /student/registrations/{registrationId}/consent` (multipart `file`). Continue needs an uploaded, not rejected letter.
+5. Step 6: `POST /payment/create-order` (backend requires verified email + uploaded, non-rejected consent) → Razorpay Checkout
+   (`checkoutRegistration`) → `POST /payment/verify` (signature check → ENROLLED).
+   A cancelled payment keeps the account: the student can finish from the letter page (consent card, "Complete payment";
+   if create-order says the email is unverified, the page shows the code box). Retries never register or charge again.
+6. Token stored in localStorage (`authToken`, `userId`) → stage `acceptance-letter`.
 
 ### Cyber cafe registration
 1. Cafe signs in (or registers the cafe) → `CyberCafeWorkspace`.
@@ -59,9 +69,8 @@ cyber-cafe assisted registration, acceptance letters with QR verification, and a
    for that student and to pay the order. "Register another student" resets the form.
 
 ### Forgot password (students)
-Sign-in → "Forgot password?" → `ForgotPasswordFlow`: `POST /auth/password/forgot` → code → `POST /auth/password/verify-otp`
-(checks the code, does not use it) → new password + confirm → `POST /auth/password/reset` (the code is checked and used here).
-Success returns to sign-in.
+Sign-in → "Forgot password?" → `ForgotPasswordFlow`: `POST /auth/password/forgot` → code + new password + confirm →
+`POST /auth/password/reset` (checks and uses the code, also marks the email verified). Success returns to sign-in.
 
 ### Student login
 Login → stage `student-home` (`features/student/student-home.tsx`: letter status and option cards; certificate, course and attendance are "Coming soon"). The acceptance letter opens from its card → `GET /student/me` → `GET /acceptance-letters/me`. If the registration is paid and no
@@ -94,9 +103,29 @@ letter exists yet, `POST /acceptance-letters/registrations/{registrationId}` iss
   (or expose a dedicated public verify endpoint returning minimal fields). Currently the live API rejects anonymous calls.
 - Hosting must rewrite unknown paths to `index.html` (SPA fallback) so the QR deep link loads.
 
+### Consent letter and WhatsApp group
+- Consent: status `GET /student/registrations/{id}/consent/status` (`consentStatus` is PENDING even before upload — check
+  `consentUploaded`), file `GET /student/registrations/{id}/consent`. A new upload resets to PENDING; an APPROVED letter
+  cannot be replaced by the student. Admin review: `GET /admin/consents?status=`, `PUT /admin/registrations/{id}/consent`
+  `{status: APPROVED|REJECTED, reason}` (reason required for REJECTED, ≤ 500 chars).
+- WhatsApp: one group per college + batch (`/admin/whatsapp-groups`, links must start with `https://chat.whatsapp.com/`),
+  `POST /admin/whatsapp-groups/{id}/send-pending?resend=` emails it. Students: `GET /student/registrations/{id}/whatsapp-group`
+  (400 before payment, 404 while no group exists).
+
+### RBAC
+- `/api/admin/**` is **SUPER_ADMIN only** (SecurityConfig). SUPER_ADMIN sees every dashboard section.
+- UNIVERSITY_ADMIN counts as an admin only on the "owner or admin" endpoints (`/student/{id}`, consent status/file, letter by
+  registration, WhatsApp group), so its dashboard has just **Students** (lookup by student ID or user ID).
+- Students and cafes reach registration-scoped endpoints only for their own / their registered students (backend checks).
+
+### Master data (admin)
+- Lists come from `/admin/master/{universities|districts|colleges|courses|batches}` (include inactive); updates are partial PUTs.
+- JSON active flag: `active` on University/College, `isActive` on Course/Batch/WhatsApp group.
+- Delete of a record in use returns 409 with "Set it to inactive instead". College code ≤ 30 chars, no `/` (it is in the letter number).
+
 ## Backend contract assumptions / TODO
 - `AuthResponse`: `{ token, userId, name, email, role: SUPER_ADMIN | UNIVERSITY_ADMIN | STUDENT | CYBER_CAFE }`.
-- Payments are server-verified: `/payment/create-order` (needs the registration and a verified email) and `/payment/verify`
+- Payments are server-verified: `/payment/create-order` (needs the registration, a verified email and a consent letter) and `/payment/verify`
   (signature check with the key secret, then ENROLLED). The frontend sends no payment fields to `/auth/register/student`.
 - `StudentDetails.letterNumber` is not returned by `/student/me`; the letter number comes from `/acceptance-letters/me`.
 - **DB migration**: `sql/email_verification.sql` (in the backend repo) must be run before starting the backend,

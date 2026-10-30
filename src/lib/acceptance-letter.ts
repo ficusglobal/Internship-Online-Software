@@ -1,4 +1,5 @@
 import type { StudentDetails } from "./auth-api";
+import { paths } from "./routes";
 
 export type LetterDetails = Partial<StudentDetails>;
 
@@ -26,7 +27,7 @@ export function buildLetterNumber(details: LetterDetails): string {
 }
 
 export function verificationUrl(studentId: string): string {
-  return `${window.location.origin}/student/acceptance-letter/${encodeURIComponent(studentId)}`;
+  return `${window.location.origin}${paths.verifyLetter(studentId)}`;
 }
 
 // DD.MM.YYYY, as printed on the completion certificate. Accepts "YYYY-MM-DD" or an ISO timestamp.

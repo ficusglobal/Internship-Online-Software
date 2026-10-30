@@ -1,12 +1,13 @@
 import { API_BASE_URL } from "../constants/api";
 import { cached } from "./cache";
+import type { AccountRole } from "./session";
 
 export interface AuthResponse {
   token: string;
   userId: string;
   name: string;
   email: string;
-  role: "SUPER_ADMIN" | "UNIVERSITY_ADMIN" | "STUDENT" | "CYBER_CAFE";
+  role: AccountRole;
 }
 
 export interface StudentDetails {
@@ -25,6 +26,12 @@ export interface StudentDetails {
   collegeRollNumber: string;
   batchId: number;
   courseId: number;
+  collegeAddress?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  // Backend registration number of the internship (not the university registration number)
+  internshipRegistrationNumber?: string;
   universityName?: string;
   collegeName?: string;
   courseName?: string;
@@ -199,45 +206,61 @@ export class ApiError extends Error {
   }
 }
 
-// Auth is opt-in: public endpoints (login, registration, master data) never
-// send a token. `auth: true` uses the stored session token; a string uses that token.
-export async function request<T>(
-  path: string,
-  init?: RequestInit,
-  auth: boolean | string = false,
-): Promise<T> {
+// Spring Security rejects a missing/expired token or a wrong role before the controller runs,
+// with an empty body, so those statuses get a readable message here.
+function fallbackMessage(status: number): string {
+  if (status === 401) return "Your session has expired. Please sign in again.";
+  if (status === 403) return "You do not have permission to do this. Sign in with an account that has access.";
+  return "Unable to complete your request. Please try again.";
+}
+
+async function toApiError(response: Response): Promise<ApiError> {
+  const apiError = (await response.json().catch(() => null)) as ApiErrorPayload | null;
+  const validationMessage = apiError?.validationErrors
+    ? Object.values(apiError.validationErrors)[0]
+    : undefined;
+  return new ApiError(
+    validationMessage ?? apiError?.message ?? fallbackMessage(response.status),
+    response.status,
+    apiError?.validationErrors ?? {},
+  );
+}
+
+function bearer(auth: boolean | string): Record<string, string> {
   const token =
     typeof auth === "string"
       ? auth
       : auth
         ? localStorage.getItem("authToken")
         : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+// Auth is opt-in: public endpoints (login, registration, master data) never
+// send a token. `auth: true` uses the stored session token; a string uses that token.
+// A FormData body (file upload) is sent as multipart; the browser sets its Content-Type.
+export async function request<T>(
+  path: string,
+  init?: RequestInit,
+  auth: boolean | string = false,
+): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(typeof init?.body === "string" ? { "Content-Type": "application/json" } : {}),
+      ...bearer(auth),
       ...init?.headers,
     },
   });
-  const payload = (await response.json().catch(() => null)) as
-    | ApiErrorPayload
-    | T
-    | null;
-  if (!response.ok) {
-    const apiError = payload as ApiErrorPayload | null;
-    const validationMessage = apiError?.validationErrors
-      ? Object.values(apiError.validationErrors)[0]
-      : undefined;
-    throw new ApiError(
-      validationMessage ??
-        apiError?.message ??
-        "Unable to complete your request. Please try again.",
-      response.status,
-      apiError?.validationErrors ?? {},
-    );
-  }
-  return payload as T;
+  if (!response.ok) throw await toApiError(response);
+  return (await response.json().catch(() => null)) as T;
+}
+
+// For endpoints that return a file (e.g. the consent letter) instead of JSON
+export async function requestBlob(path: string, auth: boolean | string = true): Promise<Blob> {
+  const response = await fetch(`${API_BASE_URL}${path}`, { headers: bearer(auth) });
+  if (!response.ok) throw await toApiError(response);
+  return response.blob();
 }
 
 const post = <T>(path: string, body: unknown, auth?: boolean | string) =>
@@ -327,6 +350,62 @@ export const acceptanceLetterApi = {
     request<AcceptanceLetter>(
       `/acceptance-letters/registrations/${encodeURIComponent(registrationId)}`,
       { method: "POST" },
+      authToken ?? true,
+    ),
+  // Owner student, the registering cafe or an admin; 404 until the letter is issued
+  getByRegistration: (registrationId: string, authToken?: string) =>
+    request<AcceptanceLetter>(
+      `/acceptance-letters/registrations/${encodeURIComponent(registrationId)}`,
+      undefined,
+      authToken ?? true,
+    ),
+};
+
+export type ConsentStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+// Shape of the consent endpoints (student status/upload and the admin list/review).
+// consentStatus is PENDING even before anything is uploaded, so check consentUploaded first.
+export interface ConsentSummary {
+  registrationId: string;
+  studentName?: string;
+  email?: string;
+  mobileNo?: string;
+  collegeId?: number;
+  batchId?: number;
+  registrationStatus?: string;
+  consentStatus?: ConsentStatus;
+  consentUploaded?: boolean;
+  rejectionReason?: string;
+  reviewedAt?: string;
+}
+
+const consentPath = (registrationId: string) =>
+  `/student/registrations/${encodeURIComponent(registrationId)}/consent`;
+
+// Allowed for the student, the cafe that registered them, and admins (SUPER_ADMIN or UNIVERSITY_ADMIN)
+export const consentApi = {
+  status: (registrationId: string, authToken?: string) =>
+    request<ConsentSummary>(`${consentPath(registrationId)}/status`, undefined, authToken ?? true),
+  upload: (registrationId: string, file: File, authToken?: string) => {
+    const body = new FormData();
+    body.append("file", file);
+    return request<ConsentSummary>(consentPath(registrationId), { method: "POST", body }, authToken ?? true);
+  },
+  download: (registrationId: string, authToken?: string) =>
+    requestBlob(consentPath(registrationId), authToken ?? true),
+};
+
+export interface StudentGroup {
+  groupName: string;
+  groupUrl: string;
+}
+
+// Only after the payment is confirmed: 400 before that, 404 while no group exists for the college and batch
+export const whatsappGroupApi = {
+  forRegistration: (registrationId: string, authToken?: string) =>
+    request<StudentGroup>(
+      `/student/registrations/${encodeURIComponent(registrationId)}/whatsapp-group`,
+      undefined,
       authToken ?? true,
     ),
 };

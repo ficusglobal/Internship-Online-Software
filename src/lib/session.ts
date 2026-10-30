@@ -3,8 +3,13 @@
 
 export type SessionRole = "student" | "cyber-cafe" | "admin";
 
+// The backend role (AuthResponse.role). The JWT does not carry it, so it is kept here: the "admin"
+// screen differs for SUPER_ADMIN (everything under /api/admin) and UNIVERSITY_ADMIN (student lookup only).
+export type AccountRole = "SUPER_ADMIN" | "UNIVERSITY_ADMIN" | "STUDENT" | "CYBER_CAFE";
+
 export interface StoredSession {
   role: SessionRole;
+  accountRole?: AccountRole;
   name: string;
   expiresAt: number; // epoch ms, from the token's `exp` claim
 }
@@ -38,7 +43,8 @@ export function loadSession(): StoredSession | null {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!token || !raw) return null;
     const session = JSON.parse(raw) as StoredSession;
-    if (!session.expiresAt || session.expiresAt <= Date.now()) {
+    // Admin sessions saved before the backend role was stored must sign in again to learn it
+    if (!session.expiresAt || session.expiresAt <= Date.now() || (session.role === "admin" && !session.accountRole)) {
       clearSession();
       return null;
     }

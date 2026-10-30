@@ -9,8 +9,8 @@ import { useEffect, useRef, useState } from "react";
 import {
   authApi,
   masterDataApi,
-  emailVerificationApi,
   type AuthResponse,
+  type ConsentSummary,
   type InternshipBatch,
   type InternshipCourse,
   type MasterCollege,
@@ -18,6 +18,7 @@ import {
   type MasterUniversity,
   type StudentDetails,
 } from "../../lib/auth-api";
+import { consentReady } from "../../lib/consent";
 import { PaymentCancelledError } from "../../lib/payment";
 import {
   checkoutRegistration,
@@ -27,7 +28,8 @@ import {
 import { DropdownSelector } from "../../shared/components/dropdown-selector";
 import { toast } from "../../shared/components/toast";
 import { Button, Input } from "../../shared/components/ui";
-import "../../styles/email-verification.css";
+import { ConsentUpload } from "../consent/consent-upload";
+import { EmailOtp } from "./email-otp";
 
 interface RegistrationValues {
   fullName: string;
@@ -158,9 +160,7 @@ const validate = (values: RegistrationValues) => {
 // so "+91 98765-43210" becomes "9876543210" instead of "9198765432".
 const mobileDigits = (raw: string) => raw.trim().replace(/^\+91/, "").replace(/\D/g, "").slice(0, 10);
 
-const RESEND_SECONDS = 60;
-
-const STEP_LABELS = ["Details", "Internship", "Review", "Verify email", "Payment"];
+const STEP_LABELS = ["Details", "Internship", "Review", "Verify email", "Consent", "Payment"];
 
 // "2023-06-01" + "2027-05-31" -> "2023-2027" (the academicSession sent to the backend)
 const academicSessionOf = (values: Pick<RegistrationValues, "sessionStart" | "sessionEnd">) =>
@@ -182,7 +182,7 @@ const formatFee = (fee?: number) =>
     maximumFractionDigits: 0,
   }).format(Number(fee ?? 0));
 
-// The account created in step 4 (before payment) and its registration id
+// The account created in step 3 (before payment) and its registration id
 interface RegistrationSession {
   response: AuthResponse;
   registrationId?: string;
@@ -202,17 +202,15 @@ export function StudentRegistrationForm({
   mode = "self",
   onComplete,
 }: StudentRegistrationFormProps) {
-  // 1 details, 2 internship & password, 3 review (creates the account), 4 email code, 5 payment
-  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  // 1 details, 2 internship & password, 3 review (creates the account), 4 email code,
+  // 5 consent letter, 6 payment. The backend opens payment only after 4 and 5.
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
   // Set once the account exists, so a cancelled or failed payment does not register the email twice
   const [session, setSession] = useState<RegistrationSession | null>(null);
   // Confirmed by Razorpay; kept so a failed signature check is retried without charging again
   const [payment, setPayment] = useState<ConfirmedPayment | null>(null);
-  // Email verification after the account is created (step 4)
-  const [otpCode, setOtpCode] = useState("");
-  const [otpBusy, setOtpBusy] = useState<"" | "sending" | "verifying">("");
-  const [otpError, setOtpError] = useState("");
-  const [resendIn, setResendIn] = useState(0);
+  const [consent, setConsent] = useState<ConsentSummary | null>(null);
+  const [registrationError, setRegistrationError] = useState("");
   const [universities, setUniversities] = useState<MasterUniversity[]>([]);
   const [districts, setDistricts] = useState<MasterDistrict[]>([]);
   const [colleges, setColleges] = useState<MasterCollege[]>([]);
@@ -269,11 +267,17 @@ export function StudentRegistrationForm({
     void loadMasterData();
   }, []);
 
-  useEffect(() => {
-    if (resendIn <= 0) return;
-    const timer = window.setTimeout(() => setResendIn((seconds) => seconds - 1), 1000);
-    return () => window.clearTimeout(timer);
-  }, [resendIn]);
+  // The consent letter is stored against the registration, whose id comes from /student/me
+  const resolveRegistrationId = async (current: RegistrationSession) => {
+    setRegistrationError("");
+    try {
+      const { registrationId } = await authApi.getStudentDetails(current.response.token);
+      if (!registrationId) throw new Error("Your registration could not be found. Please try again.");
+      setSession({ ...current, registrationId });
+    } catch (error) {
+      setRegistrationError(error instanceof Error ? error.message : "Unable to load your registration.");
+    }
+  };
 
   const loadColleges = async (universityId: string, districtId: string) => {
     const requestId = ++collegeRequest.current;
@@ -380,45 +384,6 @@ export function StudentRegistrationForm({
           setStep(nextStep);
         };
 
-        const sendEmailCode = async () => {
-          if (!session) return;
-          setOtpBusy("sending");
-          setOtpError("");
-          try {
-            const result = await emailVerificationApi.sendCode(session.response.email);
-            setOtpCode("");
-            setResendIn(RESEND_SECONDS);
-            toast.success(result.message);
-          } catch (error) {
-            const messageText = error instanceof Error ? error.message : "Unable to send the code.";
-            setOtpError(messageText);
-            toast.error(messageText);
-          } finally {
-            setOtpBusy("");
-          }
-        };
-
-        const submitEmailCode = async () => {
-          if (!session) return;
-          if (!/^\d{6}$/.test(otpCode)) {
-            setOtpError("Enter the 6-digit code from your email.");
-            return;
-          }
-          setOtpBusy("verifying");
-          setOtpError("");
-          try {
-            await emailVerificationApi.verifyCode(session.response.email, otpCode);
-            toast.success("Email verified successfully.");
-            setStep(5);
-          } catch (error) {
-            const messageText = error instanceof Error ? error.message : "Unable to verify the code.";
-            setOtpError(messageText);
-            toast.error(messageText);
-          } finally {
-            setOtpBusy("");
-          }
-        };
-
         // Step 3 -> 4: creates the account. The backend emails a verification code to it.
         const createAccount = async () => {
           const nextErrors = validate(values);
@@ -457,9 +422,6 @@ export function StudentRegistrationForm({
               mode === "cyber-cafe",
             );
             setSession({ response });
-            setOtpCode("");
-            setOtpError("");
-            setResendIn(RESEND_SECONDS);
             setStep(4);
           } catch (error) {
             const messageText = error instanceof Error ? error.message : "Unable to create the account.";
@@ -470,23 +432,14 @@ export function StudentRegistrationForm({
           }
         };
 
-        // Step 5: Razorpay order -> Checkout -> signature check (ENROLLED). Retries reuse what is already done.
+        // Step 6: Razorpay order -> Checkout -> signature check (ENROLLED). Retries reuse what is already done.
         const completePayment = async () => {
-          if (!session) return;
-          const { response } = session;
+          if (!session?.registrationId || !consentReady(consent)) return;
+          const { response, registrationId } = session;
           const fee = Number(selectedBatch?.fee ?? 0);
           setSubmitting(true);
           setSubmitError("");
           try {
-            let registrationId = session.registrationId;
-            if (!registrationId) {
-              registrationId = (await authApi.getStudentDetails(response.token)).registrationId;
-              if (!registrationId) {
-                throw new Error("Your registration could not be found. Please try again.");
-              }
-              setSession({ response, registrationId });
-            }
-
             let paid = payment;
             if (!paid && fee > 0) {
               try {
@@ -567,7 +520,7 @@ export function StudentRegistrationForm({
                 );
               })}
               <b>
-                Step {step} of 5 / चरण {step} का 5
+                Step {step} of {STEP_LABELS.length} / चरण {step} का {STEP_LABELS.length}
               </b>
             </div>
 
@@ -618,9 +571,10 @@ export function StudentRegistrationForm({
                     name="mobileNo"
                     autoComplete="tel"
                     inputMode="numeric"
-                    maxLength={10}
                     value={values.mobileNo}
-                    // Digits only: letters and symbols are dropped as they are typed or pasted
+                    // Digits only: letters and symbols are dropped as they are typed or pasted.
+                    // No maxLength: it would cut a pasted "+91 98765-43210" before the +91 is removed;
+                    // mobileDigits already caps the value at 10 digits.
                     onChange={(event) => setFieldValue("mobileNo", mobileDigits(event.target.value))}
                     onBlur={() => setFieldTouched("mobileNo", true)}
                   />
@@ -988,53 +942,62 @@ export function StudentRegistrationForm({
               </div>
             )}
 
-            {step === 4 && (
+            {step === 4 && session && (
               <div className="registration-verify">
                 <p className="registration-step-copy">
                   Verify your email / अपना ईमेल सत्यापित करें
                 </p>
                 <p className="registration-status" role="status">
                   <CheckCircle2 size={16} /> Your account is created. Enter the 6-digit code sent to{" "}
-                  <b>{session?.response.email}</b>. Payment opens after verification.
+                  <b>{session.response.email}</b>. Payment opens after verification.
                 </p>
-                <div className="email-otp-box">
-                  <div className="email-verify-row">
-                    <Input
-                      name="emailOtp"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      maxLength={6}
-                      placeholder="6-digit code / 6 अंकों का कोड"
-                      aria-label="Email verification code"
-                      value={otpCode}
-                      onChange={(event) => setOtpCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
-                    />
-                    <Button
-                      type="button"
-                      disabled={otpBusy !== "" || otpCode.length !== 6}
-                      onClick={() => void submitEmailCode()}
-                    >
-                      {otpBusy === "verifying" && <LoaderCircle className="spin" size={16} />}
-                      Verify OTP / OTP सत्यापित करें
-                    </Button>
+                <EmailOtp
+                  email={session.response.email}
+                  codeSent
+                  onVerified={() => {
+                    setStep(5);
+                    if (!session.registrationId) void resolveRegistrationId(session);
+                  }}
+                />
+              </div>
+            )}
+
+            {step === 5 && session && (
+              <div className="registration-consent">
+                <p className="registration-step-copy">
+                  Upload the consent letter / सहमति पत्र अपलोड करें
+                </p>
+                <p className="registration-status consent-intro">
+                  Upload the consent letter signed by your college. Payment opens once it is uploaded.
+                  <small lang="hi">कॉलेज द्वारा हस्ताक्षरित सहमति पत्र अपलोड करें। अपलोड के बाद भुगतान खुलेगा।</small>
+                </p>
+                {session.registrationId ? (
+                  <ConsentUpload
+                    registrationId={session.registrationId}
+                    authToken={session.response.token}
+                    onChange={setConsent}
+                  />
+                ) : registrationError ? (
+                  <div className="registration-status registration-status-error" role="alert">
+                    <span>{registrationError}</span>
+                    <button type="button" onClick={() => void resolveRegistrationId(session)}>
+                      <RefreshCw size={14} /> Retry
+                    </button>
                   </div>
-                  {otpError && <small className="field-error">{otpError}</small>}
-                </div>
+                ) : (
+                  <p className="registration-status" role="status">
+                    <LoaderCircle className="spin" size={16} /> Loading your registration…
+                  </p>
+                )}
                 <div className="registration-actions">
-                  <Button
-                    type="button"
-                    className="button-outline"
-                    disabled={otpBusy !== "" || resendIn > 0}
-                    onClick={() => void sendEmailCode()}
-                  >
-                    {otpBusy === "sending" && <LoaderCircle className="spin" size={16} />}
-                    {resendIn > 0 ? `Resend code in ${resendIn}s` : "Resend code / कोड फिर से भेजें"}
+                  <Button type="button" disabled={!consentReady(consent)} onClick={() => setStep(6)}>
+                    Continue to payment / भुगतान पर जाएँ <ArrowRight size={16} />
                   </Button>
                 </div>
               </div>
             )}
 
-            {step === 5 && (
+            {step === 6 && (
               <div className="registration-payment">
                 <p className="registration-step-copy">
                   Payment / भुगतान
@@ -1073,7 +1036,15 @@ export function StudentRegistrationForm({
                 <div className="registration-actions">
                   <Button
                     type="button"
-                    disabled={isSubmitting}
+                    className="button-outline"
+                    disabled={isSubmitting || Boolean(payment)}
+                    onClick={() => setStep(5)}
+                  >
+                    Back / वापस
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={isSubmitting || !session?.registrationId || !consentReady(consent)}
                     onClick={() => void completePayment()}
                   >
                     {isSubmitting ? (

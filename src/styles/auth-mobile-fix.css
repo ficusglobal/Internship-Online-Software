@@ -31,3 +31,14 @@
   font-weight: 700;
   text-align: center;
 }
+
+.registration-login-link {
+  display: block;
+  margin: 0 0 1rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.registration-login-link:hover {
+  text-decoration: underline;
+}

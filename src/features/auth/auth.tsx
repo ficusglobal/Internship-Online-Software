@@ -13,12 +13,14 @@ import {
 } from "lucide-react";
 import { Field, Form, Formik } from "formik";
 import { lazy, Suspense, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Theme, University } from "../../types";
 import { Button } from "../../shared/components/ui";
 import { Popover } from "../../shared/components/popover";
 import { authApi, masterDataApi, type AuthResponse, type StudentDetails } from "../../lib/auth-api";
 import { toast } from "../../shared/components/toast";
-import { saveSession, tokenExpiry } from "../../lib/session";
+import { saveSession, tokenExpiry, type AccountRole } from "../../lib/session";
+import { paths } from "../../lib/routes";
 import { preload, screens } from "../../lib/screens";
 import "../../styles/auth-layout.css";
 import "../../styles/auth-role.css";
@@ -35,11 +37,44 @@ export type UserRole = "admin" | "student" | "cyber-cafe";
 type PublicPage = "home" | "features" | "contact";
 type StudentFlow = "login" | "register" | "details";
 
+// Which public / sign-in screen to show; each one has its own URL (see lib/routes.ts and App.tsx)
+export type SignInView =
+  | PublicPage
+  | "register"
+  | "login"
+  | "forgot-password"
+  | "admin-login"
+  | "cafe-login"
+  | "cafe-register";
+
+const PUBLIC_PATHS: Record<PublicPage, string> = { home: paths.home, features: paths.features, contact: paths.contact };
+
+// The sign-in page an account belongs to: SUPER_ADMIN and UNIVERSITY_ADMIN both use the administrator login
+const roleOf = (accountRole: AccountRole): UserRole =>
+  accountRole === "STUDENT" ? "student" : accountRole === "CYBER_CAFE" ? "cyber-cafe" : "admin";
+
+const LOGIN_NAMES: Record<UserRole, string> = {
+  student: "Student login / विद्यार्थी लॉगिन",
+  admin: "Administrator login",
+  "cyber-cafe": "Cyber cafe login",
+};
+const ACCOUNT_NAMES: Record<UserRole, string> = {
+  student: "a student",
+  admin: "an administrator",
+  "cyber-cafe": "a cyber cafe",
+};
+
+// Shown when valid credentials are used on another role's sign-in page
+const wrongPortalMessage = (accountRole: UserRole) =>
+  `This is ${ACCOUNT_NAMES[accountRole]} account and cannot sign in here. Please use ${LOGIN_NAMES[accountRole]}.`;
+
 interface SignInProps {
+  view: SignInView;
   onAuthenticated: (
     role: UserRole,
     studentName?: string,
     registration?: Partial<StudentDetails>,
+    accountRole?: AccountRole,
   ) => void;
   theme: Theme;
   setTheme: (theme: Theme) => void;
@@ -303,77 +338,49 @@ function CredentialsForm({
   );
 }
 
-export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
+export function SignIn({ view, onAuthenticated, theme, setTheme }: SignInProps) {
+  const navigate = useNavigate();
   // Warm the cache while the user is still on the landing page, so the registration form's
   // dropdowns appear without waiting. Failures are ignored here; the form retries on its own.
   useEffect(() => {
     void Promise.allSettled([masterDataApi.universities(), masterDataApi.districts(), masterDataApi.courses()]);
   }, []);
-  const [role, setRole] = useState<UserRole>("student");
-  const [studentFlow, setStudentFlow] = useState<StudentFlow>("register");
-  const [publicPage, setPublicPage] = useState<PublicPage | null>("home");
+  // The role, flow and page all follow from the URL
+  const role: UserRole = view === "admin-login" ? "admin" : view === "cafe-login" || view === "cafe-register" ? "cyber-cafe" : "student";
+  const studentFlow: StudentFlow = view === "register" ? "details" : view === "cafe-register" ? "register" : "login";
+  const publicPage: PublicPage | null = view === "home" || view === "features" || view === "contact" ? view : null;
   const [authError, setAuthError] = useState("");
   // Student "Forgot password" flow, shown in place of the sign-in form
-  const [resetting, setResetting] = useState(false);
+  const resetting = view === "forgot-password";
+  // A message from one screen must not show on the next
+  useEffect(() => setAuthError(""), [view]);
   const registering = role === "student" && studentFlow !== "login";
   const cyberCafeRegistering =
     role === "cyber-cafe" && studentFlow === "register";
   const isRegistration = registering || cyberCafeRegistering;
   const detailsStep = role === "student" && studentFlow === "details";
-  const selectRole = (nextRole: UserRole) => {
-    setRole(nextRole);
-    setResetting(false);
-    setStudentFlow(
-      nextRole === "student"
-        ? "details"
-        : nextRole === "admin"
-          ? "login"
-          : "register",
-    );
-    setAuthError("");
-    setPublicPage(null);
-  };
-  const showLogin = () => {
-    setRole("student");
-    setStudentFlow("login");
-    setPublicPage(null);
-  };
-  const showRegister = () => {
-    setRole("student");
-    setStudentFlow("details");
-    setPublicPage(null);
-  };
-  const showCyberCafeRegister = () => {
-    setRole("cyber-cafe");
-    setStudentFlow("register");
-    setAuthError("");
-    setPublicPage(null);
-  };
-  const showCyberCafeLogin = () => {
-    setRole("cyber-cafe");
-    setStudentFlow("login");
-    setAuthError("");
-    setPublicPage(null);
-  };
+  // Role menu: a student goes to registration, an administrator to sign-in, a cyber cafe to cafe registration
+  const selectRole = (nextRole: UserRole) =>
+    navigate(nextRole === "student" ? paths.register : nextRole === "admin" ? paths.adminLogin : paths.cafeRegister);
+  const showLogin = () => navigate(paths.login);
+  const showRegister = () => navigate(paths.register);
+  const showCyberCafeRegister = () => navigate(paths.cafeRegister);
+  const showCyberCafeLogin = () => navigate(paths.cafeLogin);
   const handleAuthResponse = (
     response: AuthResponse,
     successMessage?: string,
     registration?: Partial<StudentDetails>,
   ) => {
-    const role =
-      response.role === "STUDENT"
-        ? "student"
-        : response.role === "CYBER_CAFE"
-          ? "cyber-cafe"
-          : "admin";
+    const signedInRole = roleOf(response.role);
     localStorage.setItem("authToken", response.token);
     localStorage.setItem("userId", response.userId);
-    saveSession({ role, name: response.name, expiresAt: tokenExpiry(response.token) });
+    saveSession({ role: signedInRole, accountRole: response.role, name: response.name, expiresAt: tokenExpiry(response.token) });
     toast.success(successMessage ?? "Authentication completed successfully.");
     onAuthenticated(
-      role,
+      signedInRole,
       response.name,
       registration,
+      response.role,
     );
   };
   const submitCredentials = async (values: CredentialsValues) => {
@@ -393,7 +400,13 @@ export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
       if (role === "cyber-cafe" && isRegistration) {
         handleAuthResponse(await authApi.registerCyberCafe(values), "Cyber cafe account created successfully.");
       } else {
-        handleAuthResponse(await authApi.login(values.email, values.password), `${operation} successful.`);
+        const response = await authApi.login(values.email, values.password);
+        // Each sign-in page admits only its own role. On a mismatch nothing is stored and the
+        // token is dropped, so the user stays signed out on this page.
+        if (roleOf(response.role) !== role) {
+          throw new Error(wrongPortalMessage(roleOf(response.role)));
+        }
+        handleAuthResponse(response, `${operation} successful.`);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to continue. Please try again.";
@@ -475,7 +488,7 @@ export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
               <button
                 key={page}
                 className={publicPage === page ? "active" : ""}
-                onClick={() => setPublicPage(page)}
+                onClick={() => navigate(PUBLIC_PATHS[page])}
               >
                 {page}
               </button>
@@ -496,7 +509,7 @@ export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
           <button
             key={page}
             className={publicPage === page ? "active" : ""}
-            onClick={() => setPublicPage(page)}
+            onClick={() => navigate(PUBLIC_PATHS[page])}
           >
             {page}
           </button>
@@ -541,8 +554,8 @@ export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
         ];
   const description = detailsStep
     ? [
-        "Complete the five steps below to finish your internship registration.",
-        "इंटर्नशिप पंजीकरण पूरा करने के लिए नीचे दिए गए पाँच चरण पूरे करें।",
+        "Complete the six steps below to finish your internship registration.",
+        "इंटर्नशिप पंजीकरण पूरा करने के लिए नीचे दिए गए छह चरण पूरे करें।",
       ]
     : registering
       ? [
@@ -652,6 +665,13 @@ export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
           </div>
           {detailsStep ? (
             <>
+              <button
+                type="button"
+                className="auth-login-inline registration-login-link"
+                onClick={showLogin}
+              >
+                Already registered? Sign in / पहले से पंजीकृत? साइन इन करें
+              </button>
               <Suspense fallback={<div className="app-loading" role="status"><div className="spinner" /></div>}>
                 <StudentRegistrationForm onComplete={handleAuthResponse} />
               </Suspense>
@@ -699,10 +719,9 @@ export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
               {resetting ? (
                 <Suspense fallback={<div className="app-loading" role="status"><div className="spinner" /></div>}>
                   <ForgotPasswordFlow
-                    onBack={() => setResetting(false)}
+                    onBack={() => navigate(paths.login)}
                     onDone={() => {
-                      setResetting(false);
-                      setAuthError("");
+                      navigate(paths.login);
                       toast.success("Password reset. Please sign in with your new password.");
                     }}
                   />
@@ -714,7 +733,7 @@ export function SignIn({ onAuthenticated, theme, setTheme }: SignInProps) {
                   registration={isRegistration}
                   onLogin={role === "cyber-cafe" ? showCyberCafeLogin : showLogin}
                   onCyberCafeRegister={showCyberCafeRegister}
-                  onForgotPassword={role === "student" ? () => setResetting(true) : undefined}
+                  onForgotPassword={role === "student" ? () => navigate(paths.forgotPassword) : undefined}
                   onSubmit={submitCredentials}
                 />
               )}

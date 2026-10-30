@@ -225,16 +225,10 @@
   color: var(--text);
 }
 
-.admin-select {
-  width: 100%;
-  min-height: 2.6rem;
-  padding: 0 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  box-sizing: border-box;
+.admin-picker .dropdown-selector,
+.admin-inline-label .dropdown-selector,
+.admin-form .dropdown-selector {
+  font-weight: 500;
 }
 
 .admin-form {

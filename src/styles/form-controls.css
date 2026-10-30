@@ -1,0 +1,78 @@
+/* Native controls (autofill, scrollbars, date pickers) follow the app theme */
+:root {
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+.input,
+.auth-input .input {
+  color: var(--text);
+}
+
+.input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+/* Browser autofill paints its own (light) background; repaint it with the theme surface */
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus,
+.auth-input .input:-webkit-autofill,
+.auth-input .input:-webkit-autofill:hover,
+.auth-input .input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  caret-color: var(--text);
+  box-shadow: 0 0 0 100rem var(--surface-raised, var(--surface)) inset !important;
+  transition: background-color 9999s ease-out 0s;
+}
+
+.registration-form .input:-webkit-autofill,
+.registration-form .input:-webkit-autofill:hover,
+.registration-form .input:-webkit-autofill:focus {
+  box-shadow: 0 0 0 100rem var(--surface) inset !important;
+}
+
+/* Search box inside DropdownSelector */
+.dropdown-menu .dropdown-search {
+  position: sticky;
+  top: -0.35rem;
+  z-index: 1;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 0.3rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  outline: 0;
+}
+
+.dropdown-menu .dropdown-search::placeholder {
+  color: var(--muted);
+}
+
+.dropdown-menu .dropdown-search:focus {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 0.18rem var(--focus, rgba(124, 92, 255, 0.2));
+}
+
+.dropdown-menu .dropdown-empty {
+  margin: 0;
+  padding: 0.6rem 0.65rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* The check icon sits in the option row, not absolutely positioned like the trigger chevron */
+.dropdown-menu button svg {
+  position: static;
+  color: currentColor;
+}

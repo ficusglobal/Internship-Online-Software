@@ -1,0 +1,199 @@
+/* Admin dashboard: row actions (edit / activate / delete), status badges, consent review,
+   WhatsApp groups and the student lookup. */
+
+.admin-stats {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.admin-subtext {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.admin-link-text {
+  color: var(--purple);
+  text-decoration: underline;
+}
+
+.admin-warning {
+  color: #b42318;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.admin-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--soft);
+  color: var(--muted);
+}
+
+.admin-badge.is-on,
+.admin-badge.consent-approved {
+  background: #e7f6ec;
+  color: #15803d;
+}
+
+.admin-badge.is-off,
+.admin-badge.consent-rejected {
+  background: #fdecee;
+  color: #b42318;
+}
+
+.admin-badge.consent-pending {
+  background: #fdf3e1;
+  color: #8a5a12;
+}
+
+.admin-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.admin-icon-button:hover:not(:disabled) {
+  border-color: var(--purple);
+  color: var(--purple);
+}
+
+.admin-icon-button.is-danger:hover:not(:disabled) {
+  border-color: #b42318;
+  color: #b42318;
+}
+
+.admin-icon-button.is-ok:hover:not(:disabled) {
+  border-color: #15803d;
+  color: #15803d;
+}
+
+.admin-icon-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-list-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-list-row > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-form-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-form-buttons .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-subrow td {
+  background: var(--soft);
+}
+
+.admin-reject-form {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.admin-textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 500;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.admin-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px 20px;
+  margin: 0;
+}
+
+.admin-details dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.admin-details dd {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.admin-detail-card {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft);
+}
+
+.admin-detail-card p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-detail-card .button {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (min-width: 640px) {
+  .admin-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .admin-details {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
