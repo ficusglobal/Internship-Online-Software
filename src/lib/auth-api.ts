@@ -8,6 +8,9 @@ export interface AuthResponse {
   name: string;
   email: string;
   role: AccountRole;
+  // Returned by student registration and student login
+  registrationId?: string;
+  studentId?: string;
 }
 
 export interface StudentDetails {
@@ -20,6 +23,9 @@ export interface StudentDetails {
   collegeId: number;
   degree: string;
   department: string;
+  // Free text, only present when the department is "Others"
+  departmentOther?: string;
+  semester?: number;
   academicSession: string;
   majorSubject: string;
   registrationNumber: string;
@@ -100,24 +106,39 @@ export interface AcceptanceLetter {
   totalDurationHours?: number;
 }
 
+// POST /auth/register/student. The email must have been verified first (see registrationEmailApi);
+// a cyber cafe registers a student by sending its own bearer token with this request.
 export interface StudentRegistrationPayload {
   fullName: string;
-  fatherName: string;
-  collegeId: number;
-  batchId: number;
   email: string;
+  emailVerificationToken: string;
   mobileNo: string;
   password: string;
   confirmPassword: string;
-  registrationNumber: string;
-  collegeRollNumber: string;
+  collegeId: number;
+  fatherName: string;
   gender: "MALE" | "FEMALE" | "OTHER";
   degree: string;
   department: string;
-  academicSession: string;
-  majorSubject: string;
+  departmentOther: string | null;
+  semester: number;
+  academicSessionId: number;
+  majorSubjectId: number;
+  registrationNumber: string;
+  collegeRollNumber: string;
+  batchId: number;
   termsAccepted: boolean;
-  registeredVia: "SELF" | "CYBER_CAFE";
+}
+
+// GET /auth/register/check: which of the given values are already taken
+export interface RegistrationAvailability {
+  available: boolean;
+  emailExists?: boolean;
+  mobileNoExists?: boolean;
+  registrationNumberExists?: boolean;
+  collegeRollNumberExists?: boolean;
+  // field name -> reason, e.g. { mobileNo: "Mobile number is already registered" }
+  messages?: Record<string, string>;
 }
 
 export interface CyberCafeRegistrationPayload {
@@ -183,13 +204,46 @@ export interface InternshipBatch {
   course?: InternshipCourse;
 }
 
+// GET /public/master/degrees
+export interface MasterDegree {
+  code: string;
+  label: string;
+  maxSemester: number;
+}
+
+// GET /public/master/departments?degree=
+export interface MasterDepartment {
+  code: string;
+  label: string;
+  degree: string;
+}
+
+// GET /public/master/academic-sessions (name looks like 2023-2027)
+export interface MasterAcademicSession {
+  id: number;
+  name: string;
+  isActive?: boolean;
+}
+
+// GET /public/master/major-subjects
+export interface MasterMajorSubject {
+  id: number;
+  name: string;
+  isActive?: boolean;
+}
+
 interface ApiErrorPayload {
   message?: string;
   validationErrors?: Record<string, string>;
 }
 
-interface MessageResult {
+export interface MessageResult {
   message: string;
+}
+
+// POST /auth/register/email/verify-otp: the token is valid for 30 minutes and can be used once
+export interface EmailVerificationResult extends Partial<MessageResult> {
+  emailVerificationToken: string;
 }
 
 export class ApiError extends Error {
@@ -275,6 +329,21 @@ export const authApi = {
     payload: StudentRegistrationPayload,
     useStoredSession = false,
   ) => post<AuthResponse>("/auth/register/student", payload, useStoredSession),
+  // Reports which of the values are already registered (email, mobile, university registration
+  // number, college roll number within the college). Every parameter is optional.
+  checkAvailability: (values: {
+    email?: string;
+    mobileNo?: string;
+    registrationNumber?: string;
+    collegeRollNumber?: string;
+    collegeId?: number;
+  }) => {
+    const search = new URLSearchParams();
+    Object.entries(values).forEach(([key, value]) => {
+      if (value !== undefined && value !== "") search.set(key, String(value));
+    });
+    return request<RegistrationAvailability>(`/auth/register/check?${search}`);
+  },
   registerCyberCafe: (payload: CyberCafeRegistrationPayload) =>
     post<AuthResponse>("/auth/register/cybercafe", payload),
   // `authToken` lets a cyber cafe load a freshly registered student's details
@@ -293,8 +362,18 @@ export const authApi = {
     ).then(toStudentDetails),
 };
 
-// Email verification for the account that was just registered (step 4 of the registration form).
-// The backend sends the code when the account is created; these endpoints are public.
+// Email verification BEFORE registering: the code is emailed, verifying it returns the
+// emailVerificationToken that POST /auth/register/student requires. 409 = the email is already
+// registered, 429 = wait for the resend cooldown.
+export const registrationEmailApi = {
+  sendCode: (email: string) =>
+    post<MessageResult>("/auth/register/email/send-otp", { email }),
+  verifyCode: (email: string, otp: string) =>
+    post<EmailVerificationResult>("/auth/register/email/verify-otp", { email, otp }),
+};
+
+// Email verification for an existing account whose email is not verified yet (accounts created
+// before the pre-registration check). New registrations are already verified. These endpoints are public.
 export const emailVerificationApi = {
   sendCode: (email: string) =>
     post<MessageResult>("/auth/email/send-otp", { email }),
@@ -423,6 +502,19 @@ export const masterDataApi = {
       ),
     ),
   courses: () => cached("courses", () => request<InternshipCourse[]>("/public/master/courses")),
+  degrees: () => cached("degrees", () => request<MasterDegree[]>("/public/master/degrees")),
+  departments: (degree: string) =>
+    cached(`departments:${degree}`, () =>
+      request<MasterDepartment[]>(`/public/master/departments?degree=${encodeURIComponent(degree)}`),
+    ),
+  semesters: (degree: string) =>
+    cached(`semesters:${degree}`, () =>
+      request<number[]>(`/public/master/semesters?degree=${encodeURIComponent(degree)}`),
+    ),
+  academicSessions: () =>
+    cached("academicSessions", () => request<MasterAcademicSession[]>("/public/master/academic-sessions")),
+  majorSubjects: () =>
+    cached("majorSubjects", () => request<MasterMajorSubject[]>("/public/master/major-subjects")),
   batches: (courseId: number) =>
     cached(`batches:${courseId}`, () =>
       request<InternshipBatch[]>(`/public/master/batches?courseId=${encodeURIComponent(courseId)}`),

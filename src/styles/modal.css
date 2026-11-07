@@ -1,0 +1,167 @@
+/* Shared modal dialog (shared/components/modal.tsx) */
+.ui-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, #0b1020 55%, transparent);
+  animation: ui-modal-fade 0.15s ease-out;
+}
+
+.ui-modal-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: min(90vh, 900px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 24px 60px color-mix(in srgb, #0b1020 35%, transparent);
+  animation: ui-modal-rise 0.18s ease-out;
+  outline: none;
+}
+
+.ui-modal-sm { max-width: 420px; }
+.ui-modal-md { max-width: 640px; }
+.ui-modal-lg { max-width: 860px; }
+
+.ui-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ui-modal-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.ui-modal-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.ui-modal-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.ui-modal-close:hover {
+  background: var(--soft);
+  color: var(--text);
+}
+
+.ui-modal-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+/* Forms in a modal: a scrolling body and a footer that stays in view */
+.ui-modal-form.admin-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  gap: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ui-modal-body {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+/* An open dropdown list extends below its field; leave room so the scrolling body does not clip it */
+.ui-modal-body:has(.dropdown-selector) {
+  min-height: min(22rem, 55vh);
+}
+
+.ui-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.ui-modal-footer .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.confirm-message {
+  margin: 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.button.button-danger {
+  border-color: #b42318;
+  background: #b42318;
+  color: #fff;
+}
+
+@keyframes ui-modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ui-modal-rise {
+  from { opacity: 0; transform: translateY(8px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Phones: the dialog becomes a bottom sheet */
+@media (max-width: 640px) {
+  .ui-modal-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .ui-modal-panel {
+    max-width: none;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .ui-modal-footer {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .ui-modal-footer .button {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-modal-backdrop,
+  .ui-modal-panel {
+    animation: none;
+  }
+}

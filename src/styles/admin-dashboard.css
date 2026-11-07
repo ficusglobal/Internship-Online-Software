@@ -390,24 +390,3 @@
     display: none;
   }
 }
-
-/* Inputs inside the admin dashboard (the shared .input style is scoped to other screens) */
-.admin-app input:not([type="checkbox"]):not([type="radio"]) {
-  width: 100%;
-  min-height: 2.6rem;
-  padding: 0 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  font-weight: 500;
-  box-sizing: border-box;
-}
-
-.admin-app input:focus,
-.admin-app select:focus {
-  outline: 2px solid color-mix(in srgb, var(--purple) 40%, transparent);
-  outline-offset: 1px;
-  border-color: var(--purple);
-}

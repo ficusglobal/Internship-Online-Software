@@ -1,32 +1,51 @@
-import { BookOpen, Building2, CalendarCheck, CreditCard, FileCheck2, FileText, GraduationCap, Landmark, LayoutDashboard, LogOut, Menu, MessageCircle, Settings, ShieldCheck, Users, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { BookOpen, Building2, CalendarCheck, CreditCard, FileCheck2, FileText, GraduationCap, Landmark, LayoutDashboard, Library, LogOut, type LucideIcon, Menu, MessageCircle, Settings, ShieldCheck, Users, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { adminApi, type AdminDistrict, type AdminUniversity } from "../../lib/admin-api";
 import type { AccountRole } from "../../lib/session";
 import { paths } from "../../lib/routes";
-import { AdministratorsSection, CollegesSection, CoursesSection, describeError, LettersSection, MastersSection } from "./admin-sections";
+import { AdministratorsSection } from "./admin-administrators";
+import { CollegesSection } from "./admin-colleges";
+import { CoursesSection } from "./admin-courses";
+import { LettersSection } from "./admin-letters";
+import { MastersSection } from "./admin-masters";
 import { ConsentsSection } from "./admin-consents";
+import { Overview } from "./admin-overview";
+import { AcademicSessionsSection, MajorSubjectsSection } from "./admin-reference";
+import { StudentListPanel } from "./admin-student-list";
 import { StudentsSection } from "./admin-students";
 import { WhatsappSection } from "./admin-whatsapp";
-import { byName } from "./admin-ui";
+import { Avatar, byName, describeError } from "./admin-ui";
+import { ConfirmHost } from "../../shared/components/confirm-dialog";
 import { Button } from "../../shared/components/ui";
 import "../../styles/admin-dashboard.css";
 import "../../styles/admin-crud.css";
+import "../../styles/admin-theme.css";
 
-type Section = "overview" | "students" | "consents" | "colleges" | "courses" | "masters" | "whatsapp" | "letters" | "administrators";
+type Section = "overview" | "students" | "consents" | "colleges" | "courses" | "masters" | "reference" | "whatsapp" | "letters" | "administrators";
+
+interface SectionConfig {
+  id: Section;
+  label: string;
+  icon: LucideIcon;
+  superAdminOnly: boolean;
+  // The sidebar heading it is listed under
+  group: string;
+}
 
 // The backend allows /api/admin/** to SUPER_ADMIN only. A UNIVERSITY_ADMIN is an admin for the
 // student endpoints (profile, consent file, letter, group) and nothing else, so it only gets Students.
-const SECTIONS: Array<{ id: Section; label: string; icon: typeof LayoutDashboard; superAdminOnly: boolean }> = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard, superAdminOnly: true },
-  { id: "students", label: "Students", icon: Users, superAdminOnly: false },
-  { id: "consents", label: "Consent letters", icon: FileCheck2, superAdminOnly: true },
-  { id: "colleges", label: "Colleges", icon: Building2, superAdminOnly: true },
-  { id: "courses", label: "Courses & batches", icon: BookOpen, superAdminOnly: true },
-  { id: "masters", label: "Universities & districts", icon: Landmark, superAdminOnly: true },
-  { id: "whatsapp", label: "WhatsApp groups", icon: MessageCircle, superAdminOnly: true },
-  { id: "letters", label: "Acceptance letters", icon: FileText, superAdminOnly: true },
-  { id: "administrators", label: "Administrators", icon: ShieldCheck, superAdminOnly: true },
+const SECTIONS: SectionConfig[] = [
+  { id: "overview", label: "Overview", icon: LayoutDashboard, superAdminOnly: true, group: "" },
+  { id: "students", label: "Students", icon: Users, superAdminOnly: false, group: "People" },
+  { id: "consents", label: "Consent letters", icon: FileCheck2, superAdminOnly: true, group: "People" },
+  { id: "letters", label: "Acceptance letters", icon: FileText, superAdminOnly: true, group: "People" },
+  { id: "colleges", label: "Colleges", icon: Building2, superAdminOnly: true, group: "Academics" },
+  { id: "courses", label: "Courses & batches", icon: BookOpen, superAdminOnly: true, group: "Academics" },
+  { id: "masters", label: "Universities & districts", icon: Landmark, superAdminOnly: true, group: "Academics" },
+  { id: "reference", label: "Sessions & subjects", icon: Library, superAdminOnly: true, group: "Academics" },
+  { id: "whatsapp", label: "WhatsApp groups", icon: MessageCircle, superAdminOnly: true, group: "Communication" },
+  { id: "administrators", label: "Administrators", icon: ShieldCheck, superAdminOnly: true, group: "Access" },
 ];
 
 // Parts of the dashboard whose backend APIs are not ready yet. They are shown but disabled.
@@ -51,7 +70,8 @@ export function AdminDashboard({ name, accountRole, onLogout }: AdminDashboardPr
   const params = useParams();
   const defaultSection: Section = superAdmin ? "overview" : "students";
   // Unknown sections, and sections this role may not open, fall back to the role's first section
-  const section = sections.find((item) => item.id === params.section)?.id;
+  const current = sections.find((item) => item.id === params.section);
+  const section = current?.id;
   const studentId = section === "students" ? params.studentId ?? "" : "";
   const [menuOpen, setMenuOpen] = useState(false);
   const [universities, setUniversities] = useState<AdminUniversity[]>([]);
@@ -75,9 +95,11 @@ export function AdminDashboard({ name, accountRole, onLogout }: AdminDashboardPr
     loadMasters();
   }, [loadMasters, masterKey]);
 
-  const choose = (next: Section) => {
+  // Opening a section starts at the top of the page, and the phone menu closes
+  const choose = (next: string) => {
     navigate(paths.adminSection(next));
     setMenuOpen(false);
+    window.scrollTo({ top: 0 });
   };
 
   const openStudent = (id: string) => navigate(paths.adminStudent(id));
@@ -86,8 +108,16 @@ export function AdminDashboard({ name, accountRole, onLogout }: AdminDashboardPr
 
   if (invalidPath) return <Navigate to={paths.adminSection(defaultSection)} replace />;
 
+  // Sidebar headings, in order, each with its visible items
+  const groups = sections.reduce<Array<{ heading: string; items: SectionConfig[] }>>((list, item) => {
+    const existing = list.find((entry) => entry.heading === item.group);
+    if (existing) existing.items.push(item);
+    else list.push({ heading: item.group, items: [item] });
+    return list;
+  }, []);
+
   return (
-    <div className="admin-app">
+    <div className="admin-app admin-scope">
       <header className="admin-topbar">
         <button
           type="button"
@@ -102,10 +132,17 @@ export function AdminDashboard({ name, accountRole, onLogout }: AdminDashboardPr
           <span className="brand-mark">
             <GraduationCap size={18} />
           </span>
-          Ficus Global <small>{superAdmin ? "Admin" : "University admin"}</small>
+          <span>Ficus Global</span>
+          <small>{superAdmin ? "Admin" : "University admin"}</small>
         </div>
         <div className="admin-topbar-user">
-          <span className="admin-user-name">{name}</span>
+          <div className="admin-user-chip">
+            <Avatar name={name} size="sm" />
+            <span className="admin-user-text">
+              <strong>{name}</strong>
+              <small>{superAdmin ? "Super admin" : "University admin"}</small>
+            </span>
+          </div>
           <Button className="button-outline admin-logout" onClick={onLogout}>
             <LogOut size={16} /> <span>Logout</span>
           </Button>
@@ -113,30 +150,38 @@ export function AdminDashboard({ name, accountRole, onLogout }: AdminDashboardPr
       </header>
 
       <div className="admin-body">
+        {menuOpen && <button type="button" className="admin-nav-scrim" aria-label="Close menu" onClick={() => setMenuOpen(false)} />}
         <nav className={`admin-nav ${menuOpen ? "is-open" : ""}`} aria-label="Admin sections">
-          {sections.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                className={`admin-nav-item ${section === item.id ? "active" : ""}`}
-                aria-current={section === item.id ? "page" : undefined}
-                onClick={() => choose(item.id)}
-              >
-                <Icon size={18} /> {item.label}
-              </button>
-            );
-          })}
-          <p className="admin-nav-heading">Coming soon</p>
-          {UNAVAILABLE.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button key={item.label} type="button" className="admin-nav-item" disabled title="Not available yet">
-                <Icon size={18} /> {item.label}
-              </button>
-            );
-          })}
+          {groups.map((group) => (
+            <div className="admin-nav-group" key={group.heading || "top"}>
+              {group.heading && <p className="admin-nav-heading">{group.heading}</p>}
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`admin-nav-item ${section === item.id ? "active" : ""}`}
+                    aria-current={section === item.id ? "page" : undefined}
+                    onClick={() => choose(item.id)}
+                  >
+                    <Icon size={18} /> {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+          <div className="admin-nav-group">
+            <p className="admin-nav-heading">Coming soon</p>
+            {UNAVAILABLE.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button key={item.label} type="button" className="admin-nav-item" disabled title="Not available yet">
+                  <Icon size={18} /> {item.label}
+                </button>
+              );
+            })}
+          </div>
         </nav>
 
         <main className="admin-main">
@@ -149,15 +194,27 @@ export function AdminDashboard({ name, accountRole, onLogout }: AdminDashboardPr
             </p>
           )}
 
-          {section === "students" && <StudentsSection initialId={studentId} onLookup={openStudent} />}
+          {section === "students" && (
+            <>
+              {/* The list is /admin/students (SUPER_ADMIN only); a university admin only has the lookup */}
+              {superAdmin && !studentId && <StudentListPanel universities={universities} onOpen={openStudent} />}
+              <StudentsSection initialId={studentId} onLookup={openStudent} onBack={superAdmin ? () => choose("students") : undefined} />
+            </>
+          )}
           {superAdmin && (
             <>
-              {section === "overview" && <Overview universities={universities.length} districts={districts.length} />}
+              {section === "overview" && <Overview name={name} universities={universities} districts={districts} onNavigate={choose} onOpenStudent={openStudent} />}
               {section === "consents" && <ConsentsSection />}
               {section === "colleges" && <CollegesSection universities={universities} districts={districts} />}
               {section === "courses" && <CoursesSection />}
               {section === "masters" && (
                 <MastersSection universities={universities} districts={districts} onChanged={() => setMasterKey((key) => key + 1)} />
+              )}
+              {section === "reference" && (
+                <>
+                  <AcademicSessionsSection />
+                  <MajorSubjectsSection />
+                </>
               )}
               {section === "whatsapp" && <WhatsappSection />}
               {section === "letters" && <LettersSection onOpenStudent={openStudent} />}
@@ -166,48 +223,7 @@ export function AdminDashboard({ name, accountRole, onLogout }: AdminDashboardPr
           )}
         </main>
       </div>
+      <ConfirmHost />
     </div>
-  );
-}
-
-function Overview({ universities, districts }: { universities: number; districts: number }) {
-  const [letters, setLetters] = useState<number | null>(null);
-  const [courses, setCourses] = useState<number | null>(null);
-  const [pendingConsents, setPendingConsents] = useState<number | null>(null);
-  const latest = useRef(0);
-
-  useEffect(() => {
-    const request = ++latest.current;
-    adminApi.courses().then((list) => request === latest.current && setCourses(list.length)).catch(() => setCourses(null));
-    adminApi.letters({}).then((list) => request === latest.current && setLetters(list.length)).catch(() => setLetters(null));
-    adminApi
-      .consents("PENDING")
-      .then((list) => request === latest.current && setPendingConsents(list.length))
-      .catch(() => setPendingConsents(null));
-  }, []);
-
-  const stats = [
-    { label: "Universities", value: universities },
-    { label: "Districts", value: districts },
-    { label: "Courses", value: courses },
-    { label: "Letters issued", value: letters },
-    { label: "Consents to review", value: pendingConsents },
-  ];
-
-  return (
-    <section className="admin-panel">
-      <header className="admin-panel-head">
-        <h2>Overview</h2>
-        <p>Live counts from the server. Choose a section on the left to add or review records.</p>
-      </header>
-      <div className="admin-stats">
-        {stats.map((stat) => (
-          <div className="admin-stat" key={stat.label}>
-            <span>{stat.label}</span>
-            <strong>{stat.value ?? "—"}</strong>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }

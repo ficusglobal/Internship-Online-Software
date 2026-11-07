@@ -1,6 +1,6 @@
 import { LoaderCircle } from "lucide-react";
-import { useEffect, useState } from "react";
-import { emailVerificationApi } from "../../lib/auth-api";
+import { useEffect, useRef, useState } from "react";
+import { emailVerificationApi, type MessageResult } from "../../lib/auth-api";
 import { toast } from "../../shared/components/toast";
 import { Button, Input } from "../../shared/components/ui";
 import "../../styles/email-verification.css";
@@ -8,21 +8,39 @@ import "../../styles/email-verification.css";
 // Backend: app.otp.resend-cooldown-seconds
 const RESEND_SECONDS = 60;
 
-interface EmailOtpProps {
-  email: string;
-  onVerified: () => void;
-  // True when a code was just sent (the backend emails one on registration), so resend starts on cooldown
-  codeSent?: boolean;
+// The two endpoints behind the code box: send a code, then check it
+export interface EmailOtpApi<Result> {
+  sendCode: (email: string) => Promise<MessageResult>;
+  verifyCode: (email: string, otp: string) => Promise<Result>;
 }
 
-// 6-digit email code for an existing account: POST /auth/email/send-otp, then /auth/email/verify-otp.
-// The send endpoint answers the same way whether or not a code went out (cooldown, hourly cap, already verified).
-export function EmailOtp({ email, onVerified, codeSent = false }: EmailOtpProps) {
+interface EmailOtpProps<Result> {
+  email: string;
+  onVerified: (result: Result) => void;
+  // True when a code was just sent, so resend starts on cooldown
+  codeSent?: boolean;
+  // Send the first code as soon as the box appears (once, even under React StrictMode)
+  autoSend?: boolean;
+  // Defaults to the existing-account endpoints (/auth/email/send-otp and /auth/email/verify-otp)
+  api?: EmailOtpApi<Result>;
+}
+
+// 6-digit email code. By default it verifies an existing account's email; the registration form passes
+// `registrationEmailApi` to verify an email before the account exists.
+// The existing-account send endpoint answers the same way whether or not a code went out (cooldown, hourly cap, already verified).
+export function EmailOtp<Result = MessageResult>({
+  email,
+  onVerified,
+  codeSent = false,
+  autoSend = false,
+  api = emailVerificationApi as unknown as EmailOtpApi<Result>,
+}: EmailOtpProps<Result>) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState<"" | "sending" | "verifying">("");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(codeSent);
   const [resendIn, setResendIn] = useState(codeSent ? RESEND_SECONDS : 0);
+  const autoSent = useRef(false);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -34,7 +52,7 @@ export function EmailOtp({ email, onVerified, codeSent = false }: EmailOtpProps)
     setBusy("sending");
     setError("");
     try {
-      const result = await emailVerificationApi.sendCode(email);
+      const result = await api.sendCode(email);
       setCode("");
       setSent(true);
       setResendIn(RESEND_SECONDS);
@@ -48,6 +66,14 @@ export function EmailOtp({ email, onVerified, codeSent = false }: EmailOtpProps)
     }
   };
 
+  useEffect(() => {
+    if (!autoSend || codeSent || autoSent.current) return;
+    autoSent.current = true;
+    void send();
+    // Only the first render may send; later sends are the resend button
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const verify = async () => {
     if (!/^\d{6}$/.test(code)) {
       setError("Enter the 6-digit code from your email.");
@@ -56,9 +82,9 @@ export function EmailOtp({ email, onVerified, codeSent = false }: EmailOtpProps)
     setBusy("verifying");
     setError("");
     try {
-      await emailVerificationApi.verifyCode(email, code);
+      const result = await api.verifyCode(email, code);
       toast.success("Email verified successfully.");
-      onVerified();
+      onVerified(result);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to verify the code.";
       setError(message);

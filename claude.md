@@ -23,8 +23,9 @@ cyber-cafe assisted registration, acceptance letters with QR verification, and a
   `accountRole` is discarded (sign in again). `logout()` clears them.
 - `src/features/auth/auth.tsx` — public landing, role picker, login/registration screens (`SignIn`). `forgot-password-flow.tsx` (same folder) is the student reset.
 - `src/features/registration/student-registration-form.tsx` — 6-step student registration
-  (details → internship/account → review (creates the account) → verify email → consent letter → pay).
-  `mode="self" | "cyber-cafe"`. Calls `onComplete(response, message, snapshot)`. `email-otp.tsx` (same folder) is the code box.
+  (details → internship/account → verify email → review (creates the account) → consent letter → pay).
+  `mode="self" | "cyber-cafe"`. Calls `onComplete(response, message, snapshot)`. `email-otp.tsx` (same folder) is the code box;
+  it takes an `api` prop (`registrationEmailApi` before registration, default `emailVerificationApi` for an existing account).
 - `src/features/consent/consent-upload.tsx` — consent letter status/upload/view, used by the form (step 5) and the letter page.
   `lib/consent.ts` mirrors the backend file rules (PDF/JPG/PNG by magic bytes, ≤ 5 MB) and `consentReady()`.
 - `src/features/cyber-cafe/cyber-cafe-workspace.tsx` — signed-in cafe registers students, then sees/downloads that student's letter.
@@ -39,9 +40,20 @@ cyber-cafe assisted registration, acceptance letters with QR verification, and a
 - `src/lib/acceptance-letter.ts` — letter number/date formatting, verification URL, PDF export.
 - `src/features/student/student-home.tsx` — student home (status, "My details" from `/student/me`, option cards).
   `whatsapp-group-card.tsx` (same folder) shows the group link on the letter page once paid.
-- `src/features/admin/admin-dashboard.tsx` — admin shell, sections gated by role (see RBAC). Sections: `admin-sections.tsx`
-  (colleges, courses & batches, universities & districts, letters, administrators), `admin-consents.tsx`, `admin-whatsapp.tsx`,
-  `admin-students.tsx`; shared form/table helpers in `admin-ui.tsx`. API in `src/lib/admin-api.ts`.
+- `src/features/admin/admin-dashboard.tsx` — admin shell, sections gated by role (see RBAC). Sections:
+  `admin-reference.tsx` (academic sessions,
+  major subjects), `admin-colleges.tsx`, `admin-courses.tsx` (courses + batches), `admin-masters.tsx` (universities + districts),
+  `admin-letters.tsx`, `admin-administrators.tsx`, `admin-consents.tsx`, `admin-whatsapp.tsx`, `admin-students.tsx` (single-student lookup) and
+  `admin-student-list.tsx` (filtered, paged `/admin/students`); shared form/table helpers in `admin-ui.tsx`. API in `src/lib/admin-api.ts`.
+- **Admin panel conventions** (every section follows them):
+  - Lists are tables with a search box, filters as searchable `DropdownSelector`s and the shared `Pagination`
+    (`shared/components/pagination.tsx`). In-memory lists use `useListView` (`lib/use-list-view.ts`: search + paging + reset on
+    filter change); the student list pages on the server (`/admin/students?page=&size=`) with the same component.
+  - No form is shown inline. The panel header has an "Add …" button; the row's Edit button opens the same form in a modal
+    (`FormModal` in `admin-ui.tsx`, built on `shared/components/modal.tsx`) already filled with the record. Mount the modal only
+    while it is open (`{editor && <XModal …/>}`) so each opening starts from fresh values.
+  - Deleting or emailing asks first in a confirm modal (`confirmAction`, host mounted in `AdminDashboard`), never `window.confirm`.
+  - Row actions go through `useRowAction` (busy state, toast, confirm). Server field errors show inline in the modal.
 - `src/lib/cache.ts` — 5-minute cache for public master data; admin writes clear the public lists they affect.
 - Shared UI in `src/shared/components/`; all global CSS in `src/styles/`. Screens are lazy-loaded (`App.tsx`).
 - Styles are global CSS files imported from `main.tsx`/components (`styles.css` is minified; add new styles in separate files,
@@ -51,19 +63,29 @@ cyber-cafe assisted registration, acceptance letters with QR verification, and a
 
 ### Student self-registration
 1. Home → "Student registration" → `StudentRegistrationForm` (mode `self`).
-2. Step 3 "Create account": `POST /auth/register/student` creates the account (REGISTERED); the backend emails a 6-digit code.
-3. Step 4: `POST /auth/email/verify-otp` (resend: `/auth/email/send-otp`, 60 s cooldown, 10 min expiry, 5 attempts).
-4. Step 5: `GET /student/me` gives `registrationId` → consent letter upload
-   `POST /student/registrations/{registrationId}/consent` (multipart `file`). Continue needs an uploaded, not rejected letter.
-5. Step 6: `POST /payment/create-order` (backend requires verified email + uploaded, non-rejected consent) → Razorpay Checkout
-   (`checkoutRegistration`) → `POST /payment/verify` (signature check → ENROLLED).
-   A cancelled payment keeps the account: the student can finish from the letter page (consent card, "Complete payment";
-   if create-order says the email is unverified, the page shows the code box). Retries never register or charge again.
-6. Token stored in localStorage (`authToken`, `userId`) → stage `acceptance-letter`.
+2. Step 1 → 2 runs `GET /auth/register/check` (mobile, university registration no., roll no. + college); step 2 → 3 checks the email.
+   A taken value is shown on its field (`available: false`, flags like `mobileNoExists`). A failed check never blocks (the register call checks again).
+3. Step 3 verifies the email **before the account exists**: `POST /auth/register/email/send-otp` (sent once when the step opens;
+   409 = already registered, 429 = cooldown) → `POST /auth/register/email/verify-otp` returns `emailVerificationToken`
+   (valid 30 min, single use; the form drops it after 29 min or when the email changes).
+4. Step 4 "Create account": `POST /auth/register/student` with the token. Body: `fullName, email, emailVerificationToken, mobileNo,
+   password, confirmPassword, collegeId, fatherName, gender, degree, department, departmentOther, semester, academicSessionId,
+   majorSubjectId, registrationNumber, collegeRollNumber, batchId, termsAccepted`. Response: `AuthResponse` + `registrationId` + `studentId`.
+   Field errors from the server send the user back to the step that holds the field; a refused token sends them back to step 3.
+5. Step 5: consent letter upload `POST /student/registrations/{registrationId}/consent` (multipart `file`). Continue needs an uploaded, not rejected letter.
+6. Step 6: `POST /payment/create-order` (needs a consent letter) → Razorpay Checkout (`checkoutRegistration`) → `POST /payment/verify`
+   (signature check → ENROLLED). A cancelled payment keeps the account: the student can finish from the letter page (consent card,
+   "Complete payment"). Retries never register or charge again.
+7. Token stored in localStorage (`authToken`, `userId`) → stage `acceptance-letter`.
+
+Registration form fields come from the API (all searchable `DropdownSelector`s): university, district, college, degree
+(`/public/master/degrees` → `{code,label,maxSemester}`), department (`/departments?degree=` → codes like `BSC`; codes ending
+`_OTHERS` ask for `departmentOther`), semester (`/semesters?degree=`), academic session and major subject (ids), course, batch.
+University registration number and college roll number are digits only (max 20, like the backend).
 
 ### Cyber cafe registration
 1. Cafe signs in (or registers the cafe) → `CyberCafeWorkspace`.
-2. Same form with `mode="cyber-cafe"`. The registration request sends the cafe's bearer token (`useStoredSession`) so the backend
+2. Same form with `mode="cyber-cafe"`. The register request sends the cafe's bearer token (`useStoredSession`) so the backend
    links the registration to the cafe. The OTP goes to the student's email; cafe staff enter it.
 3. The student's returned token is **not** stored; it is passed to `AcceptanceLetter` as `authToken` to load `/student/me`
    for that student and to pay the order. "Register another student" resets the form.
@@ -119,8 +141,12 @@ letter exists yet, `POST /acceptance-letters/registrations/{registrationId}` iss
 - Students and cafes reach registration-scoped endpoints only for their own / their registered students (backend checks).
 
 ### Master data (admin)
-- Lists come from `/admin/master/{universities|districts|colleges|courses|batches}` (include inactive); updates are partial PUTs.
-- JSON active flag: `active` on University/College, `isActive` on Course/Batch/WhatsApp group.
+- Lists come from `/admin/master/{universities|districts|colleges|courses|batches|academic-sessions|major-subjects}` (include inactive); updates are partial PUTs.
+- JSON active flag: `active` on University/College, `isActive` on Course/Batch/WhatsApp group. Academic sessions and major subjects are
+  written with `active` but read back as `isActive` (`isRecordActive()` in `admin-api.ts`). Session names must look like `2023-2027`.
+- Student list: `GET /admin/students?status=&universityId=&collegeId=&courseId=&batchId=&page=&size=` (SUPER_ADMIN). `adminApi.students`
+  accepts a Spring page (`content`, `totalElements`, `totalPages`) or a plain array (paged locally).
+- Letter search filters (`/admin/acceptance-letters`) are dropdowns: college (value = college code) and session (value = session name).
 - Delete of a record in use returns 409 with "Set it to inactive instead". College code ≤ 30 chars, no `/` (it is in the letter number).
 
 ## Backend contract assumptions / TODO

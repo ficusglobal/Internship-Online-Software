@@ -1,0 +1,4796 @@
+{
+  "info": {
+    "name": "Internship Registration API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Run the folders in order (0 -> 12). Fill adminEmail, adminPassword and studentEmail in the collection variables first. Tokens and ids are saved automatically by each request's Tests script.\n\nPayment: Postman cannot open Razorpay Checkout. Folder 6 only checks create-order; pay in payment-test.html with the same student login, then continue with folder 7."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{studentToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "description": "Backend URL"
+    },
+    {
+      "key": "adminEmail",
+      "value": "",
+      "description": "FILL: email of a SUPER_ADMIN account"
+    },
+    {
+      "key": "adminPassword",
+      "value": "",
+      "description": "FILL: its password"
+    },
+    {
+      "key": "studentEmail",
+      "value": "",
+      "description": "FILL: a real inbox you can open (the OTP is emailed). Use a new one per test run."
+    },
+    {
+      "key": "studentPassword",
+      "value": "Test@12345",
+      "description": "Password for the test student"
+    },
+    {
+      "key": "otp",
+      "value": "",
+      "description": "FILL after 'Send OTP': the 6-digit code from the email"
+    },
+    {
+      "key": "resetOtp",
+      "value": "",
+      "description": "FILL after 'Forgot password': the code from the email"
+    },
+    {
+      "key": "emailVerificationToken",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "studentToken",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "cafeToken",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "registrationId",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "studentId",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "universityId",
+      "value": "",
+      "description": "auto (or set an existing id)"
+    },
+    {
+      "key": "districtId",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "collegeId",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "collegeCode",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "courseId",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "batchId",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "academicSessionId",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "academicSessionName",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "majorSubjectId",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "whatsappGroupId",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "newSessionName",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "mobileNo",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "registrationNumber",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "collegeRollNumber",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "cafeEmail",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "cafeMobile",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "uniAdminMobile",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "razorpayKeySecret",
+      "value": "",
+      "description": "FILL for simulated payment: RAZORPAY_KEY_SECRET from .env (TEST key only; keep local)"
+    },
+    {
+      "key": "fakePaymentId",
+      "value": "",
+      "description": "auto"
+    },
+    {
+      "key": "fakeSignature",
+      "value": "",
+      "description": "auto"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Admin login",
+      "item": [
+        {
+          "name": "Admin login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.token !== undefined && j.token !== null) pm.collectionVariables.set(\"adminToken\", j.token);",
+                  "pm.test(\"is SUPER_ADMIN\", () => pm.expect(pm.response.json().role).to.eql(\"SUPER_ADMIN\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Fill adminEmail / adminPassword in the collection variables first. Saves {{adminToken}}.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailOrMobile\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Admin - create test data",
+      "item": [
+        {
+          "name": "Create university",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.id !== undefined && j.id !== null) pm.collectionVariables.set(\"universityId\", j.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/universities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "universities"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test University {{$timestamp}}\",\n  \"code\": \"TU{{$timestamp}}\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List universities (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/universities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "universities"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get university",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/universities/{{universityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "universities",
+                "{{universityId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update university",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/universities/{{universityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "universities",
+                "{{universityId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test University {{$timestamp}} (edited)\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create district",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.id !== undefined && j.id !== null) pm.collectionVariables.set(\"districtId\", j.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/districts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "districts"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test District {{$timestamp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List districts (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/districts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "districts"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get district",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/districts/{{districtId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "districts",
+                "{{districtId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update district",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/districts/{{districtId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "districts",
+                "{{districtId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test District {{$timestamp}} (edited)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create college",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.id !== undefined && j.id !== null) pm.collectionVariables.set(\"collegeId\", j.id);",
+                  "if (j && j.code !== undefined && j.code !== null) pm.collectionVariables.set(\"collegeCode\", j.code);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/colleges",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "colleges"
+              ]
+            },
+            "description": "The college code is used in the acceptance letter number (max 30 characters).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"universityId\": {{universityId}},\n  \"districtId\": {{districtId}},\n  \"name\": \"Test College {{$timestamp}}\",\n  \"code\": \"TC{{$timestamp}}\",\n  \"addressLine1\": \"Main Road\",\n  \"city\": \"Ranchi\",\n  \"state\": \"Jharkhand\",\n  \"pincode\": \"834001\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List colleges (admin, filtered)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/colleges?universityId={{universityId}}&districtId={{districtId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "colleges"
+              ],
+              "query": [
+                {
+                  "key": "universityId",
+                  "value": "{{universityId}}"
+                },
+                {
+                  "key": "districtId",
+                  "value": "{{districtId}}"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get college",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/colleges/{{collegeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "colleges",
+                "{{collegeId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update college",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/colleges/{{collegeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "colleges",
+                "{{collegeId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"universityId\": {{universityId}},\n  \"districtId\": {{districtId}},\n  \"name\": \"Test College {{$timestamp}}\",\n  \"city\": \"Ranchi\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.id !== undefined && j.id !== null) pm.collectionVariables.set(\"courseId\", j.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/courses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "courses"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Course {{$timestamp}}\",\n  \"code\": \"CRS{{$timestamp}}\",\n  \"description\": \"Postman test course\",\n  \"theoryDurationHours\": 40,\n  \"practicalDurationHours\": 30,\n  \"reportPreparationHours\": 10,\n  \"totalDurationHours\": 80,\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List courses (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/courses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "courses"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/courses/{{courseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "courses",
+                "{{courseId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/courses/{{courseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "courses",
+                "{{courseId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated from Postman\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create batch (fee Rs 1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.id !== undefined && j.id !== null) pm.collectionVariables.set(\"batchId\", j.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/batches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "batches"
+              ]
+            },
+            "description": "Fee Rs 1 keeps test payments small (Razorpay minimum).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": {{courseId}},\n  \"batchName\": \"Test Batch {{$timestamp}}\",\n  \"startDate\": \"2026-12-01\",\n  \"endDate\": \"2027-01-31\",\n  \"fee\": 1.0,\n  \"maxStudents\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List batches (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/batches?courseId={{courseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "batches"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get batch",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/batches/{{batchId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "batches",
+                "{{batchId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update batch",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/batches/{{batchId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "batches",
+                "{{batchId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maxStudents\": 120,\n  \"status\": \"OPEN\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create academic session",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const start = 2040 + Math.floor(Math.random() * 50);",
+                  "pm.collectionVariables.set(\"newSessionName\", start + \"-\" + (start + 3));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.id !== undefined && j.id !== null) pm.collectionVariables.set(\"academicSessionId\", j.id);",
+                  "if (j && j.name !== undefined && j.name !== null) pm.collectionVariables.set(\"academicSessionName\", j.name);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/academic-sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "academic-sessions"
+              ]
+            },
+            "description": "Name must look like 2023-2027. A random future session is used so the request can be re-run.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{newSessionName}}\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List academic sessions (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/academic-sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "academic-sessions"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get academic session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/academic-sessions/{{academicSessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "academic-sessions",
+                "{{academicSessionId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update academic session (deactivate+activate)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/academic-sessions/{{academicSessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "academic-sessions",
+                "{{academicSessionId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create academic session - bad format (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/academic-sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "academic-sessions"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"2023/27\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create major subject",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.id !== undefined && j.id !== null) pm.collectionVariables.set(\"majorSubjectId\", j.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/major-subjects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "major-subjects"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Subject {{$timestamp}}\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List major subjects (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/major-subjects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "major-subjects"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get major subject",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/major-subjects/{{majorSubjectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "major-subjects",
+                "{{majorSubjectId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update major subject",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/major-subjects/{{majorSubjectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "major-subjects",
+                "{{majorSubjectId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create WhatsApp group (dummy link)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.id !== undefined && j.id !== null) pm.collectionVariables.set(\"whatsappGroupId\", j.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/whatsapp-groups",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "whatsapp-groups"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"collegeId\": {{collegeId}},\n  \"batchId\": {{batchId}},\n  \"groupName\": \"Test Group {{$timestamp}}\",\n  \"groupUrl\": \"https://chat.whatsapp.com/TEST{{$timestamp}}\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List WhatsApp groups",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/whatsapp-groups?collegeId={{collegeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "whatsapp-groups"
+              ],
+              "query": [
+                {
+                  "key": "collegeId",
+                  "value": "{{collegeId}}"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get WhatsApp group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/whatsapp-groups/{{whatsappGroupId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "whatsapp-groups",
+                "{{whatsappGroupId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update WhatsApp group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/whatsapp-groups/{{whatsappGroupId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "whatsapp-groups",
+                "{{whatsappGroupId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"groupName\": \"Test Group (edited)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Public dropdowns (no login)",
+      "item": [
+        {
+          "name": "Universities",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/master/universities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "master",
+                "universities"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Districts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/master/districts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "master",
+                "districts"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Colleges of a university + district",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/master/colleges?universityId={{universityId}}&districtId={{districtId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "master",
+                "colleges"
+              ],
+              "query": [
+                {
+                  "key": "universityId",
+                  "value": "{{universityId}}"
+                },
+                {
+                  "key": "districtId",
+                  "value": "{{districtId}}"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Courses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/master/courses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "master",
+                "courses"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Batches of a course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/master/batches?courseId={{courseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "master",
+                "batches"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Degrees",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/master/degrees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "master",
+                "degrees"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Departments - UG",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/master/departments?degree=UG",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "master",
+                "departments"
+              ],
+              "query": [
+                {
+                  "key": "degree",
+                  "value": "UG"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Departments - PG",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/master/departments?degree=PG",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "master",
+                "departments"
+              ],
+              "query": [
+                {
+                  "key": "degree",
+                  "value": "PG"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Semesters - UG (1-8)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/master/semesters?degree=UG",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "master",
+                "semesters"
+              ],
+              "query": [
+                {
+                  "key": "degree",
+                  "value": "UG"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Semesters - PG (1-4)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/master/semesters?degree=PG",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "master",
+                "semesters"
+              ],
+              "query": [
+                {
+                  "key": "degree",
+                  "value": "PG"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Academic sessions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/master/academic-sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "master",
+                "academic-sessions"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Major subjects",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/master/major-subjects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "master",
+                "major-subjects"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Student registration (no login)",
+      "item": [
+        {
+          "name": "Send email OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/email/send-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "email",
+                "send-otp"
+              ]
+            },
+            "description": "Emails a 6-digit code to {{studentEmail}}. Put it in the 'otp' collection variable, then run Verify. 409 = email already registered; 429 = wait 60 s.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Verify email OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.emailVerificationToken !== undefined && j.emailVerificationToken !== null) pm.collectionVariables.set(\"emailVerificationToken\", j.emailVerificationToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/email/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "email",
+                "verify-otp"
+              ]
+            },
+            "description": "Saves {{emailVerificationToken}} (valid 30 minutes, usable once).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"otp\": \"{{otp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Check duplicates (random new values)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = n => Math.floor(Math.random() * n);",
+                  "pm.collectionVariables.set(\"mobileNo\", \"9\" + String(r(1e9)).padStart(9, \"0\"));",
+                  "pm.collectionVariables.set(\"registrationNumber\", String(Date.now()).slice(-10));",
+                  "pm.collectionVariables.set(\"collegeRollNumber\", String(10000 + r(90000)));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "pm.test(\"all available\", () => pm.expect(pm.response.json().available).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/check?email={{studentEmail}}&mobileNo={{mobileNo}}&registrationNumber={{registrationNumber}}&collegeRollNumber={{collegeRollNumber}}&collegeId={{collegeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "check"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{studentEmail}}"
+                },
+                {
+                  "key": "mobileNo",
+                  "value": "{{mobileNo}}"
+                },
+                {
+                  "key": "registrationNumber",
+                  "value": "{{registrationNumber}}"
+                },
+                {
+                  "key": "collegeRollNumber",
+                  "value": "{{collegeRollNumber}}"
+                },
+                {
+                  "key": "collegeId",
+                  "value": "{{collegeId}}"
+                }
+              ]
+            },
+            "description": "Generates a random mobile, registration no. and roll no. for this run and checks they are free.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "NEGATIVE - PG with semester 6 (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/student",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "student"
+              ]
+            },
+            "description": "Rejected before the token is used, so it can run before the real registration.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Postman Student\",\n  \"email\": \"{{studentEmail}}\",\n  \"emailVerificationToken\": \"{{emailVerificationToken}}\",\n  \"mobileNo\": \"{{mobileNo}}\",\n  \"password\": \"{{studentPassword}}\",\n  \"confirmPassword\": \"{{studentPassword}}\",\n  \"collegeId\": {{collegeId}},\n  \"fatherName\": \"Postman Father\",\n  \"gender\": \"MALE\",\n  \"degree\": \"PG\",\n  \"department\": \"MSC\",\n  \"departmentOther\": null,\n  \"semester\": 6,\n  \"academicSessionId\": {{academicSessionId}},\n  \"majorSubjectId\": {{majorSubjectId}},\n  \"registrationNumber\": \"{{registrationNumber}}\",\n  \"collegeRollNumber\": \"{{collegeRollNumber}}\",\n  \"batchId\": {{batchId}},\n  \"termsAccepted\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "NEGATIVE - UG degree with PG department (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/student",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "student"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Postman Student\",\n  \"email\": \"{{studentEmail}}\",\n  \"emailVerificationToken\": \"{{emailVerificationToken}}\",\n  \"mobileNo\": \"{{mobileNo}}\",\n  \"password\": \"{{studentPassword}}\",\n  \"confirmPassword\": \"{{studentPassword}}\",\n  \"collegeId\": {{collegeId}},\n  \"fatherName\": \"Postman Father\",\n  \"gender\": \"MALE\",\n  \"degree\": \"UG\",\n  \"department\": \"MSC\",\n  \"departmentOther\": null,\n  \"semester\": 5,\n  \"academicSessionId\": {{academicSessionId}},\n  \"majorSubjectId\": {{majorSubjectId}},\n  \"registrationNumber\": \"{{registrationNumber}}\",\n  \"collegeRollNumber\": \"{{collegeRollNumber}}\",\n  \"batchId\": {{batchId}},\n  \"termsAccepted\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "NEGATIVE - Others without department name (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/student",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "student"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Postman Student\",\n  \"email\": \"{{studentEmail}}\",\n  \"emailVerificationToken\": \"{{emailVerificationToken}}\",\n  \"mobileNo\": \"{{mobileNo}}\",\n  \"password\": \"{{studentPassword}}\",\n  \"confirmPassword\": \"{{studentPassword}}\",\n  \"collegeId\": {{collegeId}},\n  \"fatherName\": \"Postman Father\",\n  \"gender\": \"MALE\",\n  \"degree\": \"UG\",\n  \"department\": \"UG_OTHERS\",\n  \"departmentOther\": null,\n  \"semester\": 5,\n  \"academicSessionId\": {{academicSessionId}},\n  \"majorSubjectId\": {{majorSubjectId}},\n  \"registrationNumber\": \"{{registrationNumber}}\",\n  \"collegeRollNumber\": \"{{collegeRollNumber}}\",\n  \"batchId\": {{batchId}},\n  \"termsAccepted\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "NEGATIVE - roll number with letters (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/student",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "student"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Postman Student\",\n  \"email\": \"{{studentEmail}}\",\n  \"emailVerificationToken\": \"{{emailVerificationToken}}\",\n  \"mobileNo\": \"{{mobileNo}}\",\n  \"password\": \"{{studentPassword}}\",\n  \"confirmPassword\": \"{{studentPassword}}\",\n  \"collegeId\": {{collegeId}},\n  \"fatherName\": \"Postman Father\",\n  \"gender\": \"MALE\",\n  \"degree\": \"UG\",\n  \"department\": \"BSC\",\n  \"departmentOther\": null,\n  \"semester\": 5,\n  \"academicSessionId\": {{academicSessionId}},\n  \"majorSubjectId\": {{majorSubjectId}},\n  \"registrationNumber\": \"{{registrationNumber}}\",\n  \"collegeRollNumber\": \"12A\",\n  \"batchId\": {{batchId}},\n  \"termsAccepted\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Register student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.token !== undefined && j.token !== null) pm.collectionVariables.set(\"studentToken\", j.token);",
+                  "if (j && j.registrationId !== undefined && j.registrationId !== null) pm.collectionVariables.set(\"registrationId\", j.registrationId);",
+                  "if (j && j.studentId !== undefined && j.studentId !== null) pm.collectionVariables.set(\"studentId\", j.studentId);",
+                  "pm.test(\"returns registrationId\", () => pm.expect(pm.response.json().registrationId).to.be.a(\"string\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/student",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "student"
+              ]
+            },
+            "description": "Saves {{studentToken}}. For the Others department use \"department\": \"UG_OTHERS\", \"departmentOther\": \"B.Voc\".",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Postman Student\",\n  \"email\": \"{{studentEmail}}\",\n  \"emailVerificationToken\": \"{{emailVerificationToken}}\",\n  \"mobileNo\": \"{{mobileNo}}\",\n  \"password\": \"{{studentPassword}}\",\n  \"confirmPassword\": \"{{studentPassword}}\",\n  \"collegeId\": {{collegeId}},\n  \"fatherName\": \"Postman Father\",\n  \"gender\": \"MALE\",\n  \"degree\": \"UG\",\n  \"department\": \"BSC\",\n  \"departmentOther\": null,\n  \"semester\": 5,\n  \"academicSessionId\": {{academicSessionId}},\n  \"majorSubjectId\": {{majorSubjectId}},\n  \"registrationNumber\": \"{{registrationNumber}}\",\n  \"collegeRollNumber\": \"{{collegeRollNumber}}\",\n  \"batchId\": {{batchId}},\n  \"termsAccepted\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "NEGATIVE - same token again (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"rejected\", () => pm.expect(pm.response.code).to.be.oneOf([400, 409]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/student",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "student"
+              ]
+            },
+            "description": "The email token can be used only once (409 if the email is now registered).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Postman Student\",\n  \"email\": \"{{studentEmail}}\",\n  \"emailVerificationToken\": \"{{emailVerificationToken}}\",\n  \"mobileNo\": \"9000000001\",\n  \"password\": \"{{studentPassword}}\",\n  \"confirmPassword\": \"{{studentPassword}}\",\n  \"collegeId\": {{collegeId}},\n  \"fatherName\": \"Postman Father\",\n  \"gender\": \"MALE\",\n  \"degree\": \"UG\",\n  \"department\": \"BSC\",\n  \"departmentOther\": null,\n  \"semester\": 5,\n  \"academicSessionId\": {{academicSessionId}},\n  \"majorSubjectId\": {{majorSubjectId}},\n  \"registrationNumber\": \"{{registrationNumber}}\",\n  \"collegeRollNumber\": \"{{collegeRollNumber}}\",\n  \"batchId\": {{batchId}},\n  \"termsAccepted\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Check duplicates (now taken)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "pm.test(\"not available\", () => pm.expect(pm.response.json().available).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/check?email={{studentEmail}}&mobileNo={{mobileNo}}&registrationNumber={{registrationNumber}}&collegeRollNumber={{collegeRollNumber}}&collegeId={{collegeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "check"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{studentEmail}}"
+                },
+                {
+                  "key": "mobileNo",
+                  "value": "{{mobileNo}}"
+                },
+                {
+                  "key": "registrationNumber",
+                  "value": "{{registrationNumber}}"
+                },
+                {
+                  "key": "collegeRollNumber",
+                  "value": "{{collegeRollNumber}}"
+                },
+                {
+                  "key": "collegeId",
+                  "value": "{{collegeId}}"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Student",
+      "item": [
+        {
+          "name": "Student login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.token !== undefined && j.token !== null) pm.collectionVariables.set(\"studentToken\", j.token);",
+                  "if (j && j.registrationId !== undefined && j.registrationId !== null) pm.collectionVariables.set(\"registrationId\", j.registrationId);",
+                  "if (j && j.studentId !== undefined && j.studentId !== null) pm.collectionVariables.set(\"studentId\", j.studentId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailOrMobile\": \"{{studentEmail}}\",\n  \"password\": \"{{studentPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "My profile (saves registrationId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.registrationId !== undefined && j.registrationId !== null) pm.collectionVariables.set(\"registrationId\", j.registrationId);",
+                  "if (j && j.studentId !== undefined && j.studentId !== null) pm.collectionVariables.set(\"studentId\", j.studentId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/student/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "student",
+                "me"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Student by id (self)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/student/{{studentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "student",
+                "{{studentId}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Student by id (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/student/{{studentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "student",
+                "{{studentId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Consent letter",
+      "item": [
+        {
+          "name": "Upload consent letter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/student/registrations/{{registrationId}}/consent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "student",
+                "registrations",
+                "{{registrationId}}",
+                "consent"
+              ]
+            },
+            "description": "Body -> form-data -> key 'file' -> choose a PDF/JPG/PNG (max 1 MB) before sending.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Consent status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/student/registrations/{{registrationId}}/consent/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "student",
+                "registrations",
+                "{{registrationId}}",
+                "consent",
+                "status"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Download consent letter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/student/registrations/{{registrationId}}/consent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "student",
+                "registrations",
+                "{{registrationId}}",
+                "consent"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Admin - list pending consents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/consents?status=PENDING",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "consents"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin - reject consent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/registrations/{{registrationId}}/consent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "registrations",
+                "{{registrationId}}",
+                "consent"
+              ]
+            },
+            "description": "After this, create-order is blocked until a new file is uploaded.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"REJECTED\",\n  \"reason\": \"Signature missing\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Admin - approve consent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/registrations/{{registrationId}}/consent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "registrations",
+                "{{registrationId}}",
+                "consent"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Payment",
+      "item": [
+        {
+          "name": "Create order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.orderId !== undefined && j.orderId !== null) pm.collectionVariables.set(\"orderId\", j.orderId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/create-order",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payment",
+                "create-order"
+              ]
+            },
+            "description": "Creates a real Razorpay TEST order and saves {{orderId}}. Then EITHER pay for real in payment-test.html (log in, 'Create order & pay', UPI success@razorpay) OR run the next request to simulate the payment.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationId\": \"{{registrationId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Simulate successful payment (TEST ONLY)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// TEST ONLY: builds the signature Razorpay would send after a successful payment.",
+                  "// Signature = HMAC-SHA256( order_id + \"|\" + payment_id , key_secret )  (hex)",
+                  "const secret = pm.collectionVariables.get(\"razorpayKeySecret\");",
+                  "const orderId = pm.collectionVariables.get(\"orderId\");",
+                  "if (!secret) throw new Error(\"Set the razorpayKeySecret collection variable (RAZORPAY_KEY_SECRET from .env)\");",
+                  "if (!orderId) throw new Error(\"Run Create order first\");",
+                  "const paymentId = \"pay_TEST\" + Date.now();",
+                  "const signature = CryptoJS.HmacSHA256(orderId + \"|\" + paymentId, secret).toString(CryptoJS.enc.Hex);",
+                  "pm.collectionVariables.set(\"fakePaymentId\", paymentId);",
+                  "pm.collectionVariables.set(\"fakeSignature\", signature);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "pm.test(\"verified\", () => pm.expect(pm.response.json().verified).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payment",
+                "verify"
+              ]
+            },
+            "description": "No browser needed. The pre-request script signs a fake payment id with your TEST key secret, exactly as Razorpay would, and calls verify. The registration becomes ENROLLED and the success email is sent. The payment will NOT appear in the Razorpay Dashboard. Never use a live key secret here.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationId\": \"{{registrationId}}\",\n  \"razorpayOrderId\": \"{{orderId}}\",\n  \"razorpayPaymentId\": \"{{fakePaymentId}}\",\n  \"razorpaySignature\": \"{{fakeSignature}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "NEGATIVE - wrong signature (verified=false)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"not verified\", () => pm.expect(pm.response.json().verified).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payment",
+                "verify"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationId\": \"{{registrationId}}\",\n  \"razorpayOrderId\": \"{{orderId}}\",\n  \"razorpayPaymentId\": \"pay_FAKE123\",\n  \"razorpaySignature\": \"0000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. After payment",
+      "item": [
+        {
+          "name": "My profile (status should be ENROLLED)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "pm.test(\"ENROLLED\", () => pm.expect(pm.response.json().registrationStatus).to.eql(\"ENROLLED\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/student/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "student",
+                "me"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "WhatsApp group link",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/student/registrations/{{registrationId}}/whatsapp-group",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "student",
+                "registrations",
+                "{{registrationId}}",
+                "whatsapp-group"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Generate acceptance letter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "pm.test(\"letter number format\", () => pm.expect(pm.response.json().letterNumber).to.match(/^FG\\/[^/]+\\/\\d{4}-\\d{4}\\/\\d+$/));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/acceptance-letters/registrations/{{registrationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "acceptance-letters",
+                "registrations",
+                "{{registrationId}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Generate again (same number)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/acceptance-letters/registrations/{{registrationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "acceptance-letters",
+                "registrations",
+                "{{registrationId}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Get letter by registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/acceptance-letters/registrations/{{registrationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "acceptance-letters",
+                "registrations",
+                "{{registrationId}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "My letter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/acceptance-letters/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "acceptance-letters",
+                "me"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Admin - search letters",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/acceptance-letters?collegeCode={{collegeCode}}&academicSession={{academicSessionName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "acceptance-letters"
+              ],
+              "query": [
+                {
+                  "key": "collegeCode",
+                  "value": "{{collegeCode}}"
+                },
+                {
+                  "key": "academicSession",
+                  "value": "{{academicSessionName}}"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin - email WhatsApp link to waiting students",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/whatsapp-groups/{{whatsappGroupId}}/send-pending?resend=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "whatsapp-groups",
+                "{{whatsappGroupId}}",
+                "send-pending"
+              ],
+              "query": [
+                {
+                  "key": "resend",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Admin - student list",
+      "item": [
+        {
+          "name": "All",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "students"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "ENROLLED (paid)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/students?status=ENROLLED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "students"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ENROLLED"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "REGISTERED (payment pending)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/students?status=REGISTERED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "students"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "REGISTERED"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "By university",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/students?universityId={{universityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "students"
+              ],
+              "query": [
+                {
+                  "key": "universityId",
+                  "value": "{{universityId}}"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "By college",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/students?collegeId={{collegeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "students"
+              ],
+              "query": [
+                {
+                  "key": "collegeId",
+                  "value": "{{collegeId}}"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "By course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/students?courseId={{courseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "students"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "By batch",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/students?batchId={{batchId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "students"
+              ],
+              "query": [
+                {
+                  "key": "batchId",
+                  "value": "{{batchId}}"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Combined: college + batch + ENROLLED, page 0 size 10",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/students?collegeId={{collegeId}}&batchId={{batchId}}&status=ENROLLED&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "students"
+              ],
+              "query": [
+                {
+                  "key": "collegeId",
+                  "value": "{{collegeId}}"
+                },
+                {
+                  "key": "batchId",
+                  "value": "{{batchId}}"
+                },
+                {
+                  "key": "status",
+                  "value": "ENROLLED"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Existing account - email OTP & password reset",
+      "item": [
+        {
+          "name": "Send email OTP (existing account)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/email/send-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "email",
+                "send-otp"
+              ]
+            },
+            "description": "Only sends when the account's email is NOT verified yet (new registrations are already verified).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Verify email OTP (existing account)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/email/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "email",
+                "verify-otp"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"otp\": \"{{otp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Forgot password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/password/forgot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "password",
+                "forgot"
+              ]
+            },
+            "description": "Emails a code; put it in the 'resetOtp' variable.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Reset password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/password/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "password",
+                "reset"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"otp\": \"{{resetOtp}}\",\n  \"newPassword\": \"{{studentPassword}}\",\n  \"confirmPassword\": \"{{studentPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Cyber cafe",
+      "item": [
+        {
+          "name": "Register cyber cafe",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cafeEmail\", \"cafe\" + Date.now() + \"@example.com\");",
+                  "pm.collectionVariables.set(\"cafeMobile\", \"8\" + String(Math.floor(Math.random() * 1e9)).padStart(9, \"0\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.token !== undefined && j.token !== null) pm.collectionVariables.set(\"cafeToken\", j.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/cybercafe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "cybercafe"
+              ]
+            },
+            "description": "To register a student AS this cafe: send 'Register student' with Authorization: Bearer {{cafeToken}}.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ownerName\": \"Test Owner\",\n  \"shopName\": \"Test Cafe {{$timestamp}}\",\n  \"email\": \"{{cafeEmail}}\",\n  \"mobileNo\": \"{{cafeMobile}}\",\n  \"password\": \"Test@12345\",\n  \"confirmPassword\": \"Test@12345\",\n  \"address\": \"Main Road\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cafe login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);",
+                  "const j = pm.response.json();",
+                  "if (j && j.token !== undefined && j.token !== null) pm.collectionVariables.set(\"cafeToken\", j.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailOrMobile\": \"{{cafeEmail}}\",\n  \"password\": \"Test@12345\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cafe views a student it did NOT register (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/student/{{studentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "student",
+                "{{studentId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{cafeToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Admin users",
+      "item": [
+        {
+          "name": "Create university admin",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"uniAdminMobile\", \"7\" + String(Math.floor(Math.random() * 1e9)).padStart(9, \"0\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "create"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"University Admin\",\n  \"email\": \"uniadmin{{$timestamp}}@example.com\",\n  \"mobileNo\": \"{{uniAdminMobile}}\",\n  \"password\": \"Test@12345\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "NEGATIVE - student calls admin API (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "students"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "NEGATIVE - no token (401/403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"blocked\", () => pm.expect(pm.response.code).to.be.oneOf([401, 403]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/student/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "student",
+                "me"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Cleanup / in-use protection",
+      "item": [
+        {
+          "name": "Delete major subject in use (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/major-subjects/{{majorSubjectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "major-subjects",
+                "{{majorSubjectId}}"
+              ]
+            },
+            "description": "Students use it, so it can't be deleted - deactivate instead.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete academic session in use (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/academic-sessions/{{academicSessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "academic-sessions",
+                "{{academicSessionId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete batch in use (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/master/batches/{{batchId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "batches",
+                "{{batchId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete WhatsApp group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"2xx\", () => pm.response.to.be.success);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/whatsapp-groups/{{whatsappGroupId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "whatsapp-groups",
+                "{{whatsappGroupId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

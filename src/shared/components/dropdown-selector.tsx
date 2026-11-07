@@ -77,7 +77,7 @@ export function DropdownSelector({
         disabled={disabled}
         onClick={toggle}
       >
-        {selected?.label ?? placeholder ?? "Select an option"}
+        <span className={cn("dropdown-value", !selected && "is-placeholder")}>{selected?.label ?? placeholder ?? "Select an option"}</span>
         <ChevronDown size={16} />
       </button>
       {open && (

@@ -1,0 +1,1372 @@
+/* Admin theme. One font, one type scale and one set of form controls for the whole admin panel and its
+   modals (which render in a portal, outside .admin-app, so both carry .admin-scope). It loads after the
+   global styles and wins by scoping, so nothing outside the admin panel is affected. */
+
+.admin-scope {
+  --a-font: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --a-ok: #15803d;
+  --a-ok-bg: color-mix(in srgb, #16a34a 13%, var(--surface));
+  --a-warn: #b45309;
+  --a-warn-bg: color-mix(in srgb, #f59e0b 16%, var(--surface));
+  --a-bad: #b42318;
+  --a-bad-bg: color-mix(in srgb, #ef4444 11%, var(--surface));
+  --a-info: #1d4ed8;
+  --a-info-bg: color-mix(in srgb, #3b82f6 12%, var(--surface));
+  --a-ring: 0 0 0 3px color-mix(in srgb, var(--purple) 22%, transparent);
+  --a-radius: 10px;
+  --a-card-radius: 16px;
+  --a-hover: color-mix(in srgb, var(--soft) 70%, transparent);
+  font-family: var(--a-font);
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+.admin-scope *,
+.admin-scope button,
+.admin-scope input,
+.admin-scope textarea,
+.admin-scope select {
+  font-family: inherit;
+  letter-spacing: inherit;
+}
+
+.admin-scope code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.admin-scope h2,
+.admin-scope h3,
+.admin-scope p {
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------- shell */
+
+.admin-scope .admin-topbar {
+  height: 60px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter: saturate(160%) blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-scope .admin-brand {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.admin-scope .admin-brand small {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--purple-soft);
+  color: var(--purple);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-scope .admin-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-scope .admin-user-text {
+  display: none;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.admin-scope .admin-user-text strong {
+  display: block;
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-scope .admin-user-text small {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.admin-scope .admin-nav {
+  margin: 0;
+  gap: 0;
+  padding: 12px 12px 24px;
+}
+
+.admin-scope .admin-nav-group {
+  display: grid;
+  gap: 2px;
+}
+
+.admin-scope .admin-nav-heading {
+  margin: 18px 12px 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.admin-scope .admin-nav-group:first-child .admin-nav-heading {
+  margin-top: 4px;
+}
+
+.admin-scope .admin-nav-item {
+  padding: 9px 12px;
+  border-radius: var(--a-radius);
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.admin-scope .admin-nav-item svg {
+  flex: none;
+  color: var(--muted);
+}
+
+.admin-scope .admin-nav-item.active {
+  background: var(--purple-soft);
+  color: var(--purple);
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--purple);
+}
+
+.admin-scope .admin-nav-item.active svg {
+  color: var(--purple);
+}
+
+.admin-scope .admin-nav-scrim {
+  position: fixed;
+  inset: 60px 0 0 0;
+  z-index: 24;
+  border: 0;
+  background: color-mix(in srgb, #0b1020 40%, transparent);
+}
+
+.admin-scope .admin-main {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  gap: 20px;
+}
+
+.admin-scope .admin-back {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 6px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-scope .admin-back:hover {
+  background: var(--soft);
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------- panels */
+
+.admin-scope .admin-panel {
+  padding: 22px;
+  border-radius: var(--a-card-radius);
+  gap: 18px;
+  box-shadow: 0 1px 2px color-mix(in srgb, #0b1020 5%, transparent);
+}
+
+.admin-scope .admin-panel-head h2 {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.admin-scope .admin-panel-head p,
+.admin-scope .admin-muted {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.admin-scope .admin-panel h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.admin-scope .admin-muted-text {
+  color: var(--muted);
+}
+
+.admin-scope .admin-alert {
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--a-bad) 30%, transparent);
+  border-radius: var(--a-radius);
+  background: var(--a-bad-bg);
+  color: var(--a-bad);
+  font-size: 13.5px;
+}
+
+.admin-scope .admin-link,
+.admin-scope .admin-link-text {
+  color: var(--purple);
+  font-size: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.admin-scope .admin-link:hover,
+.admin-scope .admin-link-text:hover {
+  text-decoration: underline;
+}
+
+.admin-scope .admin-link-text svg {
+  vertical-align: -1px;
+}
+
+/* ---------------------------------------------------------------- form controls (page and modals) */
+
+.admin-scope label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-scope input:where(:not([type="checkbox"]):not([type="radio"])),
+.admin-scope textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--a-radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.admin-scope textarea {
+  height: auto;
+  min-height: 96px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.admin-scope input::placeholder,
+.admin-scope textarea::placeholder {
+  color: color-mix(in srgb, var(--muted) 85%, transparent);
+  font-weight: 400;
+}
+
+.admin-scope input:where(:not([type="checkbox"]):not([type="radio"])):hover,
+.admin-scope textarea:hover {
+  border-color: color-mix(in srgb, var(--purple) 45%, var(--border));
+}
+
+.admin-scope input:where(:not([type="checkbox"]):not([type="radio"])):focus,
+.admin-scope textarea:focus,
+.admin-scope input:focus-visible,
+.admin-scope textarea:focus-visible {
+  outline: none;
+  border-color: var(--purple);
+  box-shadow: var(--a-ring);
+}
+
+.admin-scope input[type="date"] {
+  padding-right: 8px;
+}
+
+.admin-scope .admin-field-error {
+  color: var(--a-bad);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.admin-scope .admin-subtext {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* Dropdowns: same height, font and radius as inputs, here and in modals */
+.admin-scope .dropdown-trigger {
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: var(--a-radius);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.admin-scope .dropdown-trigger:hover,
+.admin-scope .dropdown-selector.is-open .dropdown-trigger {
+  border-color: var(--purple);
+  box-shadow: var(--a-ring);
+}
+
+.admin-scope .dropdown-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-scope .dropdown-value.is-placeholder {
+  color: color-mix(in srgb, var(--muted) 85%, transparent);
+  font-weight: 400;
+}
+
+.admin-scope .dropdown-menu {
+  padding: 6px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.admin-scope .dropdown-menu button {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.admin-scope .dropdown-menu button.selected {
+  font-weight: 600;
+}
+
+.admin-scope .dropdown-menu .dropdown-search {
+  height: 36px;
+  padding: 0 10px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.admin-scope .dropdown-menu .dropdown-empty {
+  padding: 10px;
+  font-size: 13.5px;
+}
+
+/* Buttons */
+.admin-scope .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  margin: 0;
+  padding: 0 16px;
+  border: 1px solid var(--purple);
+  border-radius: var(--a-radius);
+  background: var(--purple);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--purple) 35%, transparent);
+  transform: none;
+  filter: none;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.admin-scope .button:hover:not(:disabled) {
+  background: var(--purple-strong, var(--purple));
+  border-color: var(--purple-strong, var(--purple));
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--purple) 35%, transparent);
+  filter: none;
+  transform: none;
+}
+
+.admin-scope .button:focus-visible {
+  outline: none;
+  box-shadow: var(--a-ring);
+}
+
+.admin-scope .button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-scope .button.button-outline {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.admin-scope .button.button-outline:hover:not(:disabled) {
+  background: var(--soft);
+  border-color: color-mix(in srgb, var(--purple) 45%, var(--border));
+  box-shadow: none;
+}
+
+.admin-scope .button.button-danger {
+  background: var(--a-bad);
+  border-color: var(--a-bad);
+  color: #fff;
+  box-shadow: none;
+}
+
+.admin-scope .button.button-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--a-bad) 88%, #000);
+  border-color: color-mix(in srgb, var(--a-bad) 88%, #000);
+}
+
+.admin-scope .admin-icon-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  color: var(--muted);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.admin-scope .admin-icon-button:hover:not(:disabled) {
+  background: var(--soft);
+}
+
+.admin-scope .admin-copy {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.admin-scope .admin-copy:hover {
+  background: var(--soft);
+  color: var(--purple);
+}
+
+/* Toolbar above tables: filters and the search box share one baseline */
+.admin-scope .admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.admin-scope .admin-toolbar > label {
+  flex: 1 1 200px;
+  max-width: 320px;
+}
+
+.admin-scope .admin-search {
+  position: relative;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.admin-scope .admin-search > svg {
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* Left padding clears the icon; right padding clears the clear button */
+.admin-scope .admin-search input {
+  height: 40px;
+  padding: 0 38px 0 38px;
+}
+
+.admin-scope .admin-search input[type="search"]::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.admin-scope .admin-search-clear {
+  right: 7px;
+}
+
+.admin-scope .admin-lookup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-scope .admin-lookup .admin-search {
+  flex: 1 1 320px;
+}
+
+/* ---------------------------------------------------------------- tables, badges, empty states */
+
+.admin-scope .admin-table-wrap {
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.admin-scope .admin-table {
+  font-size: 14px;
+}
+
+.admin-scope .admin-table th {
+  padding: 10px 16px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.admin-scope .admin-table td {
+  padding: 12px 16px;
+  vertical-align: middle;
+  /* Break a word only when it cannot fit; the older rule broke emails and names anywhere */
+  overflow-wrap: break-word;
+}
+
+.admin-scope .admin-table {
+  min-width: 720px;
+}
+
+.admin-scope .admin-table td.admin-nowrap {
+  white-space: nowrap;
+}
+
+/* Action icons stay on one line, so every row has the same height */
+.admin-scope .admin-table .admin-row-actions {
+  flex-wrap: nowrap;
+}
+
+.admin-scope .admin-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-scope .admin-table tbody tr:hover {
+  background: var(--a-hover);
+}
+
+.admin-scope .admin-table td strong {
+  font-weight: 600;
+}
+
+.admin-scope .admin-warning {
+  color: var(--a-warn);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.admin-scope .admin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.admin-scope .admin-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.admin-scope .admin-pill.is-ok {
+  background: var(--a-ok-bg);
+  color: var(--a-ok);
+}
+
+.admin-scope .admin-pill.is-warn {
+  background: var(--a-warn-bg);
+  color: var(--a-warn);
+}
+
+.admin-scope .admin-pill.is-bad {
+  background: var(--a-bad-bg);
+  color: var(--a-bad);
+}
+
+.admin-scope .admin-avatar {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--purple), color-mix(in srgb, var(--purple) 55%, #ec4899));
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.admin-scope .admin-avatar-sm {
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+}
+
+.admin-scope .admin-avatar-md {
+  width: 40px;
+  height: 40px;
+  font-size: 14px;
+}
+
+.admin-scope .admin-avatar-lg {
+  width: 64px;
+  height: 64px;
+  font-size: 22px;
+}
+
+.admin-scope .admin-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-scope .admin-person strong {
+  display: block;
+}
+
+.admin-scope .admin-empty {
+  padding: 32px 16px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--soft) 55%, transparent);
+}
+
+.admin-scope .admin-empty p {
+  font-size: 14px;
+}
+
+.admin-scope .admin-created-list li {
+  font-size: 14px;
+}
+
+/* Pager */
+.admin-scope .pagination-summary {
+  font-size: 13px;
+}
+
+.admin-scope .pagination-button {
+  min-width: 34px;
+  height: 34px;
+  font-size: 13px;
+}
+
+.admin-scope .pagination-size .dropdown-trigger {
+  min-height: 34px;
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------------- modal */
+
+.admin-scope.ui-modal-backdrop {
+  font-size: 14px;
+}
+
+.admin-scope .ui-modal-panel {
+  border-radius: 18px;
+}
+
+.admin-scope .ui-modal-header {
+  padding: 20px 24px 16px;
+}
+
+.admin-scope .ui-modal-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.admin-scope .ui-modal-header p {
+  margin-top: 4px;
+  font-size: 13.5px;
+}
+
+.admin-scope .ui-modal-body {
+  gap: 16px;
+  padding: 20px 24px;
+}
+
+.admin-scope .ui-modal-footer {
+  padding: 14px 24px 18px;
+  background: color-mix(in srgb, var(--soft) 50%, transparent);
+  border-radius: 0 0 18px 18px;
+}
+
+.admin-scope .admin-grid {
+  gap: 16px;
+}
+
+.admin-scope .confirm-message {
+  font-size: 14.5px;
+}
+
+/* ---------------------------------------------------------------- student details */
+
+.admin-scope .student-view {
+  display: grid;
+  gap: 20px;
+}
+
+.admin-scope .student-hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 20px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--a-card-radius);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--purple) 9%, var(--surface)), var(--surface) 70%);
+}
+
+.admin-scope .student-hero-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.admin-scope .student-hero-title h2 {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.admin-scope .student-hero-sub {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.admin-scope .student-hero-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-scope .student-hero-contact li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.admin-scope .student-hero-contact a {
+  color: var(--text);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.admin-scope .student-hero-contact a:hover {
+  color: var(--purple);
+  text-decoration: underline;
+}
+
+.admin-scope .student-hero-ids {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px 24px;
+  margin: 12px 0 0;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+}
+
+.admin-scope .student-hero-ids dt {
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.admin-scope .student-hero-ids dd {
+  margin: 2px 0 0;
+  min-width: 0;
+}
+
+.admin-scope .student-hero-ids code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--soft);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.admin-scope .student-status-row,
+.admin-scope .student-info-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.admin-scope .student-card {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--a-card-radius);
+  background: var(--surface);
+}
+
+.admin-scope .student-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.admin-scope .student-card h3 svg {
+  box-sizing: content-box;
+  padding: 6px;
+  border-radius: 8px;
+  background: var(--purple-soft);
+  color: var(--purple);
+}
+
+.admin-scope .student-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+  margin: 0;
+}
+
+.admin-scope .student-fields > div {
+  min-width: 0;
+}
+
+.admin-scope .student-fields .is-wide {
+  grid-column: 1 / -1;
+}
+
+.admin-scope .student-fields dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.admin-scope .student-fields dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.admin-scope .student-fields dd.is-empty {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.admin-scope .student-status-body {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.admin-scope .student-status-body .admin-muted {
+  margin: 0;
+}
+
+.admin-scope .student-strong {
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------------- dashboard overview */
+
+.admin-scope .ov {
+  display: grid;
+  gap: 20px;
+}
+
+.admin-scope .ov-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding: 28px;
+  border-radius: 20px;
+  background: linear-gradient(120deg, var(--purple) 0%, color-mix(in srgb, var(--purple) 62%, #ec4899) 100%);
+  color: #fff;
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--purple) 28%, transparent);
+}
+
+.admin-scope .ov-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.admin-scope .ov-hero h2 {
+  margin: 4px 0 6px;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.admin-scope .ov-hero p:not(.ov-eyebrow) {
+  max-width: 34rem;
+  font-size: 14.5px;
+  opacity: 0.92;
+}
+
+.admin-scope .ov-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-scope .ov-hero .button {
+  border-color: #fff;
+  background: #fff;
+  color: var(--purple);
+  box-shadow: none;
+}
+
+.admin-scope .ov-hero .button:hover:not(:disabled) {
+  background: color-mix(in srgb, #fff 90%, var(--purple));
+  border-color: transparent;
+}
+
+.admin-scope .ov-hero .button.button-outline {
+  background: transparent;
+  border-color: color-mix(in srgb, #fff 60%, transparent);
+  color: #fff;
+}
+
+.admin-scope .ov-hero .button.button-outline:hover:not(:disabled) {
+  background: color-mix(in srgb, #fff 14%, transparent);
+  border-color: #fff;
+}
+
+.admin-scope .ov-kpis {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.admin-scope .ov-kpi {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--a-card-radius);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.admin-scope .ov-kpi:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--purple) 40%, var(--border));
+  box-shadow: 0 8px 22px color-mix(in srgb, #0b1020 8%, transparent);
+}
+
+.admin-scope .ov-kpi:focus-visible {
+  outline: none;
+  box-shadow: var(--a-ring);
+}
+
+.admin-scope .ov-kpi-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+}
+
+.admin-scope .ov-kpi.is-brand .ov-kpi-icon {
+  background: var(--purple-soft);
+  color: var(--purple);
+}
+
+.admin-scope .ov-kpi.is-ok .ov-kpi-icon {
+  background: var(--a-ok-bg);
+  color: var(--a-ok);
+}
+
+.admin-scope .ov-kpi.is-warn .ov-kpi-icon {
+  background: var(--a-warn-bg);
+  color: var(--a-warn);
+}
+
+.admin-scope .ov-kpi.is-info .ov-kpi-icon {
+  background: var(--a-info-bg);
+  color: var(--a-info);
+}
+
+.admin-scope .ov-kpi-body {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.admin-scope .ov-kpi-label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.admin-scope .ov-kpi-body strong {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.admin-scope .ov-kpi-body strong.is-loading {
+  color: var(--muted);
+}
+
+.admin-scope .ov-kpi-body small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.admin-scope .ov-kpi-arrow {
+  color: var(--muted);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.admin-scope .ov-kpi:hover .ov-kpi-arrow {
+  opacity: 1;
+  transform: none;
+}
+
+.admin-scope .ov-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-scope .ov-main,
+.admin-scope .ov-side {
+  display: grid;
+  gap: 20px;
+  align-content: start;
+  min-width: 0;
+}
+
+.admin-scope .ov-card {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--a-card-radius);
+  background: var(--surface);
+}
+
+.admin-scope .ov-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-scope .ov-card-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.admin-scope .ov-card-note {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-scope .ov-bar {
+  display: flex;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--soft);
+}
+
+.admin-scope .ov-bar span {
+  display: block;
+  height: 100%;
+  transition: width 0.5s ease;
+}
+
+.admin-scope .ov-bar-ok {
+  background: #16a34a;
+}
+
+.admin-scope .ov-bar-warn {
+  background: #f59e0b;
+}
+
+.admin-scope .ov-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.admin-scope .ov-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-scope .ov-legend b {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.admin-scope .ov-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.admin-scope .ov-legend i.is-ok {
+  background: #16a34a;
+}
+
+.admin-scope .ov-legend i.is-warn {
+  background: #f59e0b;
+}
+
+.admin-scope .ov-recent,
+.admin-scope .ov-attention,
+.admin-scope .ov-setup {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-scope .ov-recent button,
+.admin-scope .ov-setup button,
+.admin-scope .ov-attention button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-scope .ov-recent button:hover:not(:disabled),
+.admin-scope .ov-setup button:hover {
+  background: var(--soft);
+}
+
+.admin-scope .ov-recent button:disabled {
+  cursor: default;
+}
+
+.admin-scope .ov-recent-main {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-scope .ov-recent-main strong,
+.admin-scope .ov-recent-main small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-scope .ov-recent-main strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-scope .ov-recent small,
+.admin-scope .ov-recent-meta small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.admin-scope .ov-recent-meta {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.admin-scope .ov-attention button {
+  background: var(--a-warn-bg);
+  color: var(--a-warn);
+  font-size: 13.5px;
+}
+
+.admin-scope .ov-attention button:hover {
+  background: color-mix(in srgb, var(--a-warn-bg) 70%, #f59e0b);
+}
+
+.admin-scope .ov-attention button svg {
+  flex: none;
+}
+
+.admin-scope .ov-attention button span {
+  flex: 1;
+  color: var(--text);
+}
+
+.admin-scope .ov-attention li + li {
+  margin-top: 6px;
+}
+
+.admin-scope .ov-clear {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--a-ok);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-scope .ov-setup button {
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.admin-scope .ov-setup b {
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------- breakpoints */
+
+@media (min-width: 720px) {
+  .admin-scope .student-status-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .admin-scope .student-info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 640px) {
+  .admin-scope .admin-user-text {
+    display: block;
+  }
+  .admin-scope .student-hero-ids {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .admin-scope .admin-nav-scrim {
+    display: none;
+  }
+}
+
+@media (min-width: 1100px) {
+  .admin-scope .ov-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-scope .admin-panel {
+    padding: 16px;
+  }
+  /* Two compact KPI cards per row instead of one tall card each */
+  .admin-scope .ov-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .admin-scope .ov-kpi {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 14px;
+  }
+  .admin-scope .ov-kpi-arrow {
+    display: none;
+  }
+  .admin-scope .ov-kpi-body strong {
+    font-size: 24px;
+  }
+  .admin-scope .ov-hero {
+    padding: 20px;
+  }
+  .admin-scope .student-hero {
+    padding: 18px;
+  }
+  .admin-scope .student-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .admin-scope .admin-toolbar > label {
+    max-width: none;
+  }
+  .admin-scope .ui-modal-body,
+  .admin-scope .ui-modal-header,
+  .admin-scope .ui-modal-footer {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
+
+/* Narrow phones: keep the top bar on one line (brand, avatar and an icon-only Logout) */
+@media (max-width: 520px) {
+  .admin-scope .admin-topbar {
+    gap: 8px;
+    padding: 0 12px;
+  }
+  .admin-scope .admin-brand small,
+  .admin-scope .admin-logout span {
+    display: none;
+  }
+  .admin-scope .admin-logout {
+    padding: 0 10px;
+  }
+}

@@ -343,7 +343,14 @@ export function SignIn({ view, onAuthenticated, theme, setTheme }: SignInProps) 
   // Warm the cache while the user is still on the landing page, so the registration form's
   // dropdowns appear without waiting. Failures are ignored here; the form retries on its own.
   useEffect(() => {
-    void Promise.allSettled([masterDataApi.universities(), masterDataApi.districts(), masterDataApi.courses()]);
+    void Promise.allSettled([
+      masterDataApi.universities(),
+      masterDataApi.districts(),
+      masterDataApi.courses(),
+      masterDataApi.degrees(),
+      masterDataApi.academicSessions(),
+      masterDataApi.majorSubjects(),
+    ]);
   }, []);
   // The role, flow and page all follow from the URL
   const role: UserRole = view === "admin-login" ? "admin" : view === "cafe-login" || view === "cafe-register" ? "cyber-cafe" : "student";

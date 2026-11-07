@@ -1,4 +1,12 @@
-import { request, type ConsentStatus, type ConsentSummary, type InternshipCourse, type InternshipBatch } from "./auth-api";
+import {
+  request,
+  type ConsentStatus,
+  type ConsentSummary,
+  type InternshipBatch,
+  type InternshipCourse,
+  type MasterAcademicSession,
+  type MasterMajorSubject,
+} from "./auth-api";
 import { invalidate } from "./cache";
 
 // Admin endpoints (backend /api/admin/**, SUPER_ADMIN only). They use the signed-in admin's
@@ -46,6 +54,56 @@ export interface AdminBatch extends InternshipBatch {
   maxStudents?: number;
   isActive?: boolean;
   course?: AdminCourse;
+}
+
+// Academic sessions and major subjects are written with `active`; the backend reports the flag as
+// `isActive` (the public lists show the same), so read it through isRecordActive().
+export type AdminAcademicSession = MasterAcademicSession & { active?: boolean };
+export type AdminMajorSubject = MasterMajorSubject & { active?: boolean };
+
+export const isRecordActive = (item: { isActive?: boolean; active?: boolean }) => item.isActive ?? item.active;
+
+// One row of GET /admin/students (same field names as GET /student/{id})
+export interface AdminStudentRow {
+  studentId?: string;
+  studentName?: string;
+  email?: string;
+  mobileNo?: string;
+  registrationId?: string;
+  registrationStatus?: string;
+  studentRegistrationNumber?: string;
+  registrationNumber?: string;
+  registeredAt?: string;
+  paymentStatus?: string;
+  consentStatus?: string;
+  collegeRollNumber?: string;
+  collegeName?: string;
+  collegeCode?: string;
+  courseName?: string;
+  batchName?: string;
+  academicSession?: string;
+  degree?: string;
+  department?: string;
+  semester?: number;
+}
+
+export interface StudentFilters {
+  status?: string;
+  universityId?: number;
+  collegeId?: number;
+  courseId?: number;
+  batchId?: number;
+  page?: number;
+  size?: number;
+}
+
+export interface StudentPage {
+  rows: AdminStudentRow[];
+  // Total matches when the backend reports it; undefined when only this page is known
+  total?: number;
+  totalPages?: number;
+  // True when the backend returned a plain list (no paging), which is then sliced locally
+  clientPaged: boolean;
 }
 
 // Shape of GET /admin/acceptance-letters
@@ -142,6 +200,8 @@ const AFFECTS = {
   colleges: ["colleges:"],
   courses: ["courses", "batches:"],
   batches: ["batches:"],
+  "academic-sessions": ["academicSessions"],
+  "major-subjects": ["majorSubjects"],
 };
 
 type MasterType = keyof typeof AFFECTS;
@@ -194,6 +254,31 @@ export const adminApi = {
 
   batches: (courseId?: number) => get<AdminBatch[]>(`/admin/master/batches${query({ courseId })}`),
   batch: master<AdminBatch, BatchCreateInput, BatchUpdateInput>("batches"),
+
+  academicSessions: () => get<AdminAcademicSession[]>("/admin/master/academic-sessions"),
+  academicSession: master<AdminAcademicSession, { name?: string; active?: boolean }>("academic-sessions"),
+
+  majorSubjects: () => get<AdminMajorSubject[]>("/admin/master/major-subjects"),
+  majorSubject: master<AdminMajorSubject, { name?: string; active?: boolean }>("major-subjects"),
+
+  // Filters are all optional; paging is 0-based. Accepts either a Spring page ({ content, totalElements,
+  // totalPages }) or a plain array, so the list keeps working whichever the backend returns.
+  students: async (filters: StudentFilters = {}): Promise<StudentPage> => {
+    const size = filters.size ?? 10;
+    const page = filters.page ?? 0;
+    const raw = await get<unknown>(`/admin/students${query({ ...filters, page, size })}`);
+    if (Array.isArray(raw)) {
+      return { rows: raw as AdminStudentRow[], total: raw.length, totalPages: Math.max(1, Math.ceil(raw.length / size)), clientPaged: true };
+    }
+    const body = (raw ?? {}) as Record<string, unknown>;
+    const list = [body.content, body.items, body.students, body.data].find(Array.isArray) as AdminStudentRow[] | undefined;
+    return {
+      rows: list ?? [],
+      total: typeof body.totalElements === "number" ? body.totalElements : undefined,
+      totalPages: typeof body.totalPages === "number" ? body.totalPages : undefined,
+      clientPaged: false,
+    };
+  },
 
   letters: (filters: { collegeCode?: string; academicSession?: string }) =>
     get<AdminLetter[]>(`/admin/acceptance-letters${query(filters)}`),
