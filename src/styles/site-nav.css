@@ -1,0 +1,343 @@
+/* Site navigation (features/auth/site-nav.tsx): brand, public pages, role menu, theme, Student login / registration. */
+
+body .auth-page {
+  --auth-header-height: 4rem;
+}
+
+.site-nav {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 100;
+  height: 4rem;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: saturate(170%) blur(14px);
+  -webkit-backdrop-filter: saturate(170%) blur(14px);
+}
+
+.site-nav-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: min(76rem, 100%);
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+.site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.site-brand .brand-mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--purple), color-mix(in srgb, var(--purple) 60%, #ec4899));
+  color: #fff;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--purple) 35%, transparent);
+}
+
+.site-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 auto;
+}
+
+.site-links button {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.site-links button:hover {
+  background: var(--soft);
+  color: var(--text);
+}
+
+.site-links button.is-active {
+  background: var(--purple-soft, color-mix(in srgb, var(--purple) 12%, var(--surface)));
+  color: var(--purple);
+}
+
+.site-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.site-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.site-icon-button:hover,
+.site-icon-button[aria-expanded="true"] {
+  border-color: color-mix(in srgb, var(--purple) 50%, var(--border));
+  color: var(--purple);
+}
+
+.site-role {
+  position: relative;
+}
+
+.site-role-chevron {
+  color: var(--muted);
+}
+
+.site-divider {
+  width: 1px;
+  height: 22px;
+  margin: 0 4px;
+  background: var(--border);
+}
+
+.site-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, color 0.15s;
+}
+
+.site-button:hover {
+  border-color: color-mix(in srgb, var(--purple) 50%, var(--border));
+  color: var(--purple);
+}
+
+.site-register {
+  border-color: var(--purple);
+  background: var(--purple);
+  color: #fff;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--purple) 30%, transparent);
+}
+
+.site-register:hover {
+  border-color: var(--purple-strong, var(--purple));
+  background: var(--purple-strong, var(--purple));
+  color: #fff;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--purple) 38%, transparent);
+}
+
+.site-button.is-active:not(.site-register) {
+  border-color: var(--purple);
+  background: var(--purple-soft, color-mix(in srgb, var(--purple) 12%, var(--surface)));
+  color: var(--purple);
+}
+
+.site-button:focus-visible,
+.site-icon-button:focus-visible,
+.site-links button:focus-visible,
+.site-tabs button:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
+}
+
+.site-short {
+  display: none;
+}
+
+.site-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 110;
+  display: grid;
+  gap: 2px;
+  width: min(15rem, calc(100vw - 2rem));
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 18px 40px color-mix(in srgb, #0b1020 18%, transparent);
+}
+
+.site-menu > p {
+  margin: 4px 10px 6px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.site-menu button {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.site-menu button:hover,
+.site-menu button.is-selected {
+  background: var(--purple-soft, color-mix(in srgb, var(--purple) 12%, var(--surface)));
+  color: var(--purple);
+}
+
+.site-menu button span {
+  display: grid;
+}
+
+.site-menu button b {
+  font-size: 0.86rem;
+}
+
+.site-menu button small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+/* Tab bar (tablets and phones) */
+.site-tabs {
+  display: none;
+}
+
+/* Laptop and up has room for everything; below that the links move to the tab bar */
+@media (max-width: 1023px) {
+  .site-links {
+    display: none;
+  }
+
+  .site-actions {
+    margin-left: auto;
+  }
+
+  .site-tabs {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 100;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .site-tabs button {
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    padding: 6px 4px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .site-tabs button.is-active {
+    color: var(--purple);
+  }
+
+  .site-tabs button.is-active svg {
+    padding: 3px 14px;
+    box-sizing: content-box;
+    border-radius: 999px;
+    background: var(--purple-soft, color-mix(in srgb, var(--purple) 12%, var(--surface)));
+  }
+
+  /* Pages with a tab bar leave room for it */
+  body:has(.site-tabs) .public-page {
+    padding-bottom: 5.5rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .site-nav-inner {
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .site-role-label,
+  .site-role-chevron,
+  .site-divider,
+  .site-long {
+    display: none;
+  }
+
+  .site-short {
+    display: inline;
+  }
+
+  /* "Student login" becomes "Login", "Student registration" becomes "Register" */
+  .site-button {
+    padding: 0 12px;
+    font-size: 0.84rem;
+  }
+}
+
+@media (max-width: 479px) {
+  .site-brand-name {
+    display: none;
+  }
+
+  .site-actions {
+    gap: 6px;
+  }
+
+  .site-button svg {
+    display: none;
+  }
+
+  .site-button {
+    padding: 0 12px;
+  }
+}

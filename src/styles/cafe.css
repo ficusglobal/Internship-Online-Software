@@ -1,0 +1,57 @@
+/* Cyber cafe: the workspace page and the cafe sign-in / registration forms */
+
+.cafe-page {
+  background:
+    radial-gradient(60rem 28rem at 85% -8%, color-mix(in srgb, var(--purple) 14%, transparent), transparent 70%),
+    radial-gradient(40rem 22rem at -5% 30%, color-mix(in srgb, var(--purple) 8%, transparent), transparent 70%),
+    var(--bg);
+}
+
+.cafe-page .acceptance-letter-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: blur(10px);
+}
+
+.cafe-badge {
+  margin-left: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--purple) 12%, var(--surface));
+  color: var(--purple);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* The registration stage was also a flex row from the letter page styles: keep it a centred column */
+.cafe-workspace.reg-stage {
+  display: grid;
+  flex: none;
+  justify-items: center;
+  padding: 24px 16px 28px;
+  --reg-offset: 8.5rem;
+}
+
+@media (max-width: 639px) {
+  .cafe-badge {
+    display: none;
+  }
+  .cafe-workspace.reg-stage {
+    padding: 0;
+    --reg-offset: 4.5rem;
+  }
+}
+
+/* Cafe registration form: shop and owner side by side, the address on its own line,
+   then mobile + email and password + confirmation in pairs */
+@media (min-width: 64.0625rem) {
+  body .auth-page.auth-cyber-cafe .auth-form > label.auth-span-2 {
+    grid-column: 1 / -1;
+  }
+}
+
+body .auth-page.auth-cyber-cafe .auth-form > .auth-api-error {
+  grid-column: 1 / -1;
+}

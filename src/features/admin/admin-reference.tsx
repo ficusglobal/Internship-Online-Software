@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { adminApi, isRecordActive, type AdminAcademicSession, type AdminMajorSubject } from "../../lib/admin-api";
 import { useListView } from "../../lib/use-list-view";
+import { ErrorState } from "../../shared/components/error-state";
 import { Pagination } from "../../shared/components/pagination";
+import { TableSkeleton } from "../../shared/components/skeleton";
 import { Input } from "../../shared/components/ui";
 import {
   ActiveBadge,
@@ -81,10 +83,11 @@ function NamedListPanel<Item extends Named>({ config }: { config: NamedListConfi
 
   return (
     <Panel title={config.title} text={config.text} actions={<AddButton label={`Add ${noun}`} onClick={() => setEditor({})} />}>
-      {error && <FormAlert message={error} />}
-      {items === null && !error ? (
-        <Loading label={`Loading ${config.title.toLowerCase()}…`} />
-      ) : items && items.length === 0 ? (
+      {error ? (
+        <ErrorState title={`Couldn't load ${config.title.toLowerCase()}`} message={error} onRetry={reload} />
+      ) : items === null ? (
+        <TableSkeleton headers={["Name", "Status", "Actions"]} rows={10} rowHeight={56} toolbar label={`Loading ${config.title.toLowerCase()}`} />
+      ) : items.length === 0 ? (
         <EmptyState text={`No ${config.title.toLowerCase()} yet.`} actionLabel={`Add ${noun}`} onAction={() => setEditor({})} />
       ) : items ? (
         <>

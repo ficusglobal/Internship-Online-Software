@@ -9,7 +9,9 @@ import {
   type StudentPage,
 } from "../../lib/admin-api";
 import { DropdownSelector } from "../../shared/components/dropdown-selector";
+import { ErrorState } from "../../shared/components/error-state";
 import { Pagination } from "../../shared/components/pagination";
+import { TableSkeleton } from "../../shared/components/skeleton";
 import { Avatar, byName, describeError, EmptyState, FormAlert, Loading, optionalNumber, optionsOf, Panel, StatusBadge } from "./admin-ui";
 
 // GET /admin/students?status= : ENROLLED = paid, REGISTERED = payment pending
@@ -41,6 +43,9 @@ export function StudentListPanel({ universities, onOpen }: { universities: Admin
   const [optionsError, setOptionsError] = useState("");
   const [result, setResult] = useState<StudentPage | null>(null);
   const [error, setError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+  // Bumped by "Try again" when a dropdown's options failed to load
+  const [optionsKey, setOptionsKey] = useState(0);
   const latest = useRef(0);
 
   useEffect(() => {
@@ -48,7 +53,7 @@ export function StudentListPanel({ universities, onOpen }: { universities: Admin
       .courses()
       .then((list) => setCourses(byName(list)))
       .catch((err: unknown) => setOptionsError(describeError(err).message));
-  }, []);
+  }, [optionsKey]);
 
   // Colleges narrow to the chosen university
   useEffect(() => {
@@ -60,7 +65,7 @@ export function StudentListPanel({ universities, onOpen }: { universities: Admin
     return () => {
       current = false;
     };
-  }, [filters.universityId]);
+  }, [filters.universityId, optionsKey]);
 
   // Batches narrow to the chosen course
   useEffect(() => {
@@ -72,7 +77,7 @@ export function StudentListPanel({ universities, onOpen }: { universities: Admin
     return () => {
       current = false;
     };
-  }, [filters.courseId]);
+  }, [filters.courseId, optionsKey]);
 
   useEffect(() => {
     const request = ++latest.current;
@@ -90,7 +95,7 @@ export function StudentListPanel({ universities, onOpen }: { universities: Admin
       })
       .then((next) => request === latest.current && setResult(next))
       .catch((err: unknown) => request === latest.current && setError(describeError(err).message));
-  }, [filters, page, size]);
+  }, [filters, page, size, reloadKey]);
 
   // Any filter change goes back to the first page; a changed parent filter clears its dependent one
   const setFilter = (key: keyof Filters) => (value: string) => {
@@ -111,7 +116,15 @@ export function StudentListPanel({ universities, onOpen }: { universities: Admin
 
   return (
     <Panel title="Students" text="All registered students. Narrow the list with the filters, then open a student for the full details.">
-      {optionsError && <FormAlert message={optionsError} />}
+      {optionsError && (
+        <FormAlert
+          message={`Some filters could not be loaded: ${optionsError}`}
+          onRetry={() => {
+            setOptionsError("");
+            setOptionsKey((key) => key + 1);
+          }}
+        />
+      )}
       <div className="admin-toolbar">
         <label>
           University
@@ -152,10 +165,11 @@ export function StudentListPanel({ universities, onOpen }: { universities: Admin
         )}
       </div>
 
-      {error && <FormAlert message={error} />}
-      {result === null && !error ? (
-        <Loading label="Loading students…" />
-      ) : result && shown.length === 0 ? (
+      {error ? (
+        <ErrorState title="Couldn't load students" message={error} onRetry={() => setReloadKey((key) => key + 1)} />
+      ) : result === null ? (
+        <TableSkeleton headers={["Student", "Contact", "College", "Course / Batch", "Status", "Details"]} rows={size} rowHeight={72} label="Loading students" />
+      ) : shown.length === 0 ? (
         <EmptyState text={page > 0 ? "No more students." : filtered ? "No students match these filters." : "No students registered yet."} />
       ) : result ? (
         <div className="admin-table-wrap">

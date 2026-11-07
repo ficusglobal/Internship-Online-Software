@@ -16,17 +16,18 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Theme, University } from "../../types";
 import { Button } from "../../shared/components/ui";
-import { Popover } from "../../shared/components/popover";
 import { authApi, masterDataApi, type AuthResponse, type StudentDetails } from "../../lib/auth-api";
 import { toast } from "../../shared/components/toast";
 import { saveSession, tokenExpiry, type AccountRole } from "../../lib/session";
 import { paths } from "../../lib/routes";
 import { preload, screens } from "../../lib/screens";
+import { RegistrationSkeleton } from "../registration/registration-skeleton";
+import { SiteNav } from "./site-nav";
 import "../../styles/auth-layout.css";
 import "../../styles/auth-role.css";
 import "../../styles/auth-mobile-fix.css";
 import "../../styles/auth-navbar.css";
-
+import "../../styles/cafe.css";
 // The registration form and password reset are only needed after the user picks them, so they
 // are fetched on demand (see lib/screens.ts) instead of with the sign-in screen.
 const StudentRegistrationForm = lazy(screens.registration);
@@ -46,8 +47,6 @@ export type SignInView =
   | "admin-login"
   | "cafe-login"
   | "cafe-register";
-
-const PUBLIC_PATHS: Record<PublicPage, string> = { home: paths.home, features: paths.features, contact: paths.contact };
 
 // The sign-in page an account belongs to: SUPER_ADMIN and UNIVERSITY_ADMIN both use the administrator login
 const roleOf = (accountRole: AccountRole): UserRole =>
@@ -219,7 +218,7 @@ function CredentialsForm({
                   <small className="field-error">{errors.ownerName}</small>
                 )}
               </label>
-              <label>
+              <label className="auth-span-2">
                 Shop address
                 <div className="auth-input auth-input-plain">
                   <Field
@@ -422,107 +421,13 @@ export function SignIn({ view, onAuthenticated, theme, setTheme }: SignInProps) 
     }
   };
   const navigation = (
-    <>
-      <header className="auth-navbar">
-        <div className="auth-navbar-inner">
-          <Popover
-            className="auth-role-popover auth-brand-role-selector"
-            trigger={({ open, toggle }) => (
-              <button
-                className="auth-role-icon"
-                type="button"
-                aria-label="Choose Student, Administrator, or Cyber Cafe"
-                aria-expanded={open}
-                onClick={toggle}
-              >
-                <GraduationCap size={24} />
-              </button>
-            )}
-          >
-            {({ close }) => (
-              <div className="auth-role-menu" role="menu">
-                <p>Continue as</p>
-                <button
-                  type="button"
-                  className={role === "student" ? "selected" : ""}
-                  onClick={() => {
-                    selectRole("student");
-                    close();
-                  }}
-                >
-                  <GraduationCap size={16} />
-                  <span>
-                    <b>Student</b>
-                    <small>विद्यार्थी</small>
-                  </span>
-                  {role === "student" && <Check size={15} />}
-                </button>
-                <button
-                  type="button"
-                  className={role === "admin" ? "selected" : ""}
-                  onClick={() => {
-                    selectRole("admin");
-                    close();
-                  }}
-                >
-                  <ShieldCheck size={16} />
-                  <span>
-                    <b>Administrator</b>
-                    <small>Manage programmes</small>
-                  </span>
-                  {role === "admin" && <Check size={15} />}
-                </button>
-                <button
-                  type="button"
-                  className={role === "cyber-cafe" ? "selected" : ""}
-                  onClick={() => {
-                    selectRole("cyber-cafe");
-                    close();
-                  }}
-                >
-                  <Building2 size={16} />
-                  <span>
-                    <b>Cyber Cafe</b>
-                    <small>Register students</small>
-                  </span>
-                  {role === "cyber-cafe" && <Check size={15} />}
-                </button>
-              </div>
-            )}
-          </Popover>
-          <nav className="auth-top-nav" aria-label="Public navigation">
-            {(Object.keys(publicPages) as PublicPage[]).map((page) => (
-              <button
-                key={page}
-                className={publicPage === page ? "active" : ""}
-                onClick={() => navigate(PUBLIC_PATHS[page])}
-              >
-                {page}
-              </button>
-            ))}
-          </nav>
-          <button
-            className="auth-theme-toggle auth-header-theme-toggle"
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
-          >
-            {theme === "light" ? <Moon size={17} /> : <Sun size={17} />}
-            <span>{theme === "light" ? "Dark" : "Light"}</span>
-          </button>
-        </div>
-      </header>
-      <nav className="auth-bottom-nav" aria-label="Public navigation">
-        {(Object.keys(publicPages) as PublicPage[]).map((page) => (
-          <button
-            key={page}
-            className={publicPage === page ? "active" : ""}
-            onClick={() => navigate(PUBLIC_PATHS[page])}
-          >
-            {page}
-          </button>
-        ))}
-      </nav>
-    </>
+    <SiteNav
+      role={role}
+      page={publicPage}
+      action={view === "login" ? "login" : view === "register" ? "register" : null}
+      theme={theme}
+      setTheme={setTheme}
+    />
   );
   if (publicPage) {
     const page = publicPages[publicPage];
@@ -548,6 +453,30 @@ export function SignIn({ view, onAuthenticated, theme, setTheme }: SignInProps) 
             </Button>
           )}
         </section>
+      </main>
+    );
+  }
+  // Registration is a page of its own: a fixed-height card with the stepper, so it does not use the sign-in layout
+  if (detailsStep) {
+    return (
+      <main className="reg-page">
+        {navigation}
+        <div className="reg-stage">
+          <Suspense fallback={<RegistrationSkeleton />}>
+            <StudentRegistrationForm
+              onComplete={handleAuthResponse}
+              onSignIn={showLogin}
+              headerAction={
+                <button type="button" className="reg-signin" onClick={showLogin}>
+                  <span className="reg-signin-long">Already registered? </span>Sign in<span className="reg-signin-hi"> / साइन इन करें</span>
+                </button>
+              }
+            />
+          </Suspense>
+          <p className="reg-alt">
+            Registering a cyber cafe? <button type="button" onClick={showCyberCafeRegister}>Register a cyber cafe</button>
+          </p>
+        </div>
       </main>
     );
   }

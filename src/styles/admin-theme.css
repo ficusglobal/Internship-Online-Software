@@ -1370,3 +1370,58 @@
     padding: 0 10px;
   }
 }
+
+/* ---------------------------------------------------------------- loading and failure placeholders */
+
+/* Real rows have a minimum height, so skeleton rows and loaded rows line up */
+.admin-scope .admin-table tbody tr {
+  height: 56px;
+}
+
+.admin-scope .skeleton-table-wrap .admin-table tbody tr:hover {
+  background: transparent;
+}
+
+.admin-scope .skeleton-toolbar {
+  max-width: 420px;
+}
+
+.admin-scope .ov-kpi-skeleton {
+  margin: 0;
+}
+
+.admin-scope .ov-kpi.has-error .ov-kpi-body small {
+  color: var(--a-bad);
+}
+
+.admin-scope .ov-kpi.has-error .ov-kpi-arrow {
+  display: none;
+}
+
+.admin-scope .ov-progress-skeleton {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-scope .ov-attention-skeleton {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-scope .ov-recent-skeleton {
+  display: grid;
+  gap: 2px;
+}
+
+.admin-scope .ov-recent-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px;
+}
+
+.admin-scope .ov-setup .ov-setup-error {
+  color: var(--a-bad);
+  font-size: 12.5px;
+}

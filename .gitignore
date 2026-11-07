@@ -1,4 +1,5 @@
 node_modules
 .env
 .env.local
-.Internship-Registration-API.postman_collection (1)
+# Postman API collection (local copy of the backend contract)
+Internship-Registration-API.postman_collection*.json

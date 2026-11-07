@@ -130,10 +130,19 @@ export function FieldMessage({ name, fields }: { name: string; fields: FieldErro
   return fields[name] ? <small className="admin-field-error">{fields[name]}</small> : null;
 }
 
-export function FormAlert({ message }: { message: string }) {
+// An error line. With `onRetry` it also offers "Try again" (used when a dropdown's options failed to load).
+export function FormAlert({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return message ? (
     <p className="admin-alert" role="alert">
       {message}
+      {onRetry && (
+        <>
+          {" "}
+          <button type="button" className="admin-link" onClick={onRetry}>
+            Try again
+          </button>
+        </>
+      )}
     </p>
   ) : null;
 }

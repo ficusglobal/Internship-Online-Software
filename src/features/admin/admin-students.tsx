@@ -13,8 +13,10 @@ import {
 } from "../../lib/auth-api";
 import { openFile } from "../../lib/consent";
 import { toast } from "../../shared/components/toast";
+import { ErrorState } from "../../shared/components/error-state";
+import { Skeleton, SkeletonRegion } from "../../shared/components/skeleton";
 import { Button } from "../../shared/components/ui";
-import { Avatar, CopyButton, describeError, FormAlert, Loading, Panel, StatusBadge } from "./admin-ui";
+import { Avatar, CopyButton, describeError, FormAlert, Panel, StatusBadge } from "./admin-ui";
 
 const PAID_STATUSES = new Set(["ENROLLED", "IN_PROGRESS", "COMPLETED"]);
 
@@ -65,7 +67,10 @@ const GENDERS: Record<string, string> = { MALE: "Male", FEMALE: "Female", OTHER:
 export function StudentsSection({ initialId = "", onLookup, onBack }: { initialId?: string; onLookup?: (id: string) => void; onBack?: () => void }) {
   const [id, setId] = useState(initialId);
   const [busy, setBusy] = useState(false);
+  // A "no such student" answer is a normal outcome (plain message); anything else is a failed request (retryable)
   const [error, setError] = useState("");
+  const [failure, setFailure] = useState("");
+  const [lastQuery, setLastQuery] = useState("");
   const [result, setResult] = useState<Lookup | null>(null);
 
   const search = async (value: string) => {
@@ -76,15 +81,14 @@ export function StudentsSection({ initialId = "", onLookup, onBack }: { initialI
     }
     setBusy(true);
     setError("");
+    setFailure("");
+    setLastQuery(query);
     setResult(null);
     try {
       setResult(await lookUp(query));
     } catch (err) {
-      setError(
-        err instanceof ApiError && (err.status === 400 || err.status === 404)
-          ? "No student found with this ID."
-          : describeError(err).message,
-      );
+      if (err instanceof ApiError && (err.status === 400 || err.status === 404)) setError("No student found with this ID.");
+      else setFailure(describeError(err).message);
     } finally {
       setBusy(false);
     }
@@ -96,6 +100,7 @@ export function StudentsSection({ initialId = "", onLookup, onBack }: { initialI
     else {
       setResult(null);
       setError("");
+      setFailure("");
     }
     // Runs when the URL names another student
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -131,10 +136,15 @@ export function StudentsSection({ initialId = "", onLookup, onBack }: { initialI
           </Button>
         </form>
         {error && <FormAlert message={error} />}
-        {busy && !result && <Loading label="Loading student…" />}
       </Panel>
 
-      {result && <StudentProfileView result={result} onViewConsent={viewConsent} />}
+      {busy && !result ? (
+        <StudentProfileSkeleton />
+      ) : failure ? (
+        <ErrorState title="Couldn't load this student" message={failure} onRetry={() => void search(lastQuery)} />
+      ) : (
+        result && <StudentProfileView result={result} onViewConsent={viewConsent} />
+      )}
     </>
   );
 }
@@ -306,5 +316,53 @@ function Item({ label, value, wide }: { label: string; value?: ReactNode; wide?:
       <dt>{label}</dt>
       <dd className={empty ? "is-empty" : undefined}>{empty ? "—" : value}</dd>
     </div>
+  );
+}
+
+// The profile's shape (header, three status cards, four info cards) so nothing moves when the data arrives
+function StudentProfileSkeleton() {
+  const card = (rows: number, key: string) => (
+    <section className="student-card" key={key}>
+      <Skeleton width={140} height={20} />
+      <div className="student-fields">
+        {Array.from({ length: rows }, (_, index) => (
+          <div key={index}>
+            <Skeleton width="45%" height={12} />
+            <Skeleton width="80%" height={16} style={{ marginTop: 8 }} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+  return (
+    <SkeletonRegion label="Loading student" className="student-view">
+      <section className="student-hero">
+        <Skeleton width={64} height={64} radius="full" />
+        <div>
+          <Skeleton width={260} height={26} />
+          <Skeleton width={200} height={14} style={{ marginTop: 10 }} />
+          <Skeleton width={320} height={14} style={{ marginTop: 14 }} />
+        </div>
+        <div className="student-hero-ids">
+          <Skeleton height={34} />
+          <Skeleton height={34} />
+        </div>
+      </section>
+      <div className="student-status-row">
+        {[0, 1, 2].map((index) => (
+          <section className="student-card" key={index}>
+            <Skeleton width={150} height={20} />
+            <Skeleton width={90} height={22} radius={999} />
+            <Skeleton width={110} height={40} radius={10} />
+          </section>
+        ))}
+      </div>
+      <div className="student-info-grid">
+        {card(5, "personal")}
+        {card(7, "academic")}
+        {card(3, "college")}
+        {card(4, "internship")}
+      </div>
+    </SkeletonRegion>
   );
 }

@@ -1,0 +1,34 @@
+/* A dropdown shows only as much of its selected option as fits the field (the rest is cut with an ellipsis,
+   the full text is the tooltip), so a long option can never run into the field next to it or under the chevron. */
+.dropdown-selector {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* A grid or flex item holding a dropdown must be allowed to shrink below the width of its selected text */
+:where(label, .admin-field, .reg-field):has(> .dropdown-selector) {
+  min-width: 0;
+}
+
+.dropdown-selector .dropdown-trigger {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dropdown-selector .dropdown-trigger .dropdown-value {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-selector .dropdown-trigger > svg {
+  flex: none;
+}
+
+/* Options in the list wrap, so the whole text can be read there */
+.dropdown-menu button > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

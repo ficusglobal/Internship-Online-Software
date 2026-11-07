@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { adminApi, type AdminDistrict, type AdminUniversity } from "../../lib/admin-api";
 import { useListView } from "../../lib/use-list-view";
+import { ErrorState } from "../../shared/components/error-state";
 import { Pagination } from "../../shared/components/pagination";
+import { TableSkeleton } from "../../shared/components/skeleton";
 import { Input } from "../../shared/components/ui";
 import {
   ActiveBadge,
@@ -23,18 +25,28 @@ interface MasterProps {
   districts: AdminDistrict[];
   // Reloads the universities and districts the dashboard shares between sections
   onChanged: () => void;
+  // The dashboard loads both lists once; until then (or if that failed) there is nothing to list yet
+  loading: boolean;
+  error: string;
 }
 
-export function MastersSection({ universities, districts, onChanged }: MasterProps) {
+export function MastersSection({ universities, districts, onChanged, loading, error }: MasterProps) {
+  if (error) {
+    return (
+      <Panel title="Universities and districts">
+        <ErrorState title="Couldn't load universities and districts" message={error} onRetry={onChanged} />
+      </Panel>
+    );
+  }
   return (
     <>
-      <UniversitiesPanel universities={universities} onChanged={onChanged} />
-      <DistrictsPanel districts={districts} onChanged={onChanged} />
+      <UniversitiesPanel universities={universities} loading={loading} onChanged={onChanged} />
+      <DistrictsPanel districts={districts} loading={loading} onChanged={onChanged} />
     </>
   );
 }
 
-function UniversitiesPanel({ universities, onChanged }: { universities: AdminUniversity[]; onChanged: () => void }) {
+function UniversitiesPanel({ universities, loading, onChanged }: { universities: AdminUniversity[]; loading: boolean; onChanged: () => void }) {
   // null = closed, {} = add, { item } = edit
   const [editor, setEditor] = useState<{ item?: AdminUniversity } | null>(null);
   const rows = useRowAction();
@@ -59,7 +71,9 @@ function UniversitiesPanel({ universities, onChanged }: { universities: AdminUni
       text="Colleges are added under a university and a district. Inactive universities are hidden from the registration form."
       actions={<AddButton label="Add university" onClick={() => setEditor({})} />}
     >
-      {universities.length === 0 ? (
+      {loading ? (
+        <TableSkeleton headers={["Name", "Code", "Status", "Actions"]} rows={4} rowHeight={56} toolbar label="Loading universities" />
+      ) : universities.length === 0 ? (
         <EmptyState text="No universities yet." actionLabel="Add university" onAction={() => setEditor({})} />
       ) : (
         <>
@@ -145,7 +159,7 @@ function UniversityModal({ item, onClose, onSaved }: { item?: AdminUniversity; o
   );
 }
 
-function DistrictsPanel({ districts, onChanged }: { districts: AdminDistrict[]; onChanged: () => void }) {
+function DistrictsPanel({ districts, loading, onChanged }: { districts: AdminDistrict[]; loading: boolean; onChanged: () => void }) {
   const [editor, setEditor] = useState<{ item?: AdminDistrict } | null>(null);
   const rows = useRowAction();
   const view = useListView(districts, (item) => item.name);
@@ -158,7 +172,9 @@ function DistrictsPanel({ districts, onChanged }: { districts: AdminDistrict[]; 
 
   return (
     <Panel title="Districts" text="Districts group colleges for the registration form." actions={<AddButton label="Add district" onClick={() => setEditor({})} />}>
-      {districts.length === 0 ? (
+      {loading ? (
+        <TableSkeleton headers={["Name", "Actions"]} rows={10} rowHeight={56} toolbar label="Loading districts" />
+      ) : districts.length === 0 ? (
         <EmptyState text="No districts yet." actionLabel="Add district" onAction={() => setEditor({})} />
       ) : (
         <>

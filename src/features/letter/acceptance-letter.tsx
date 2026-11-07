@@ -1,5 +1,7 @@
 import { CreditCard, Download, GraduationCap, Home, LoaderCircle, LogOut, UserPlus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ErrorState } from "../../shared/components/error-state";
+import { Skeleton, SkeletonRegion, SkeletonText } from "../../shared/components/skeleton";
 import { Button, Card } from "../../shared/components/ui";
 import { toast } from "../../shared/components/toast";
 import { AcceptanceLetterDocument } from "./acceptance-letter-document";
@@ -77,6 +79,8 @@ export function AcceptanceLetter({
   onRegisterAnother,
 }: AcceptanceLetterProps) {
   const [loading, setLoading] = useState(true);
+  // Bumped by "Try again" after a failed load
+  const [reloadKey, setReloadKey] = useState(0);
   const [details, setDetails] = useState<LetterDetails | null>(null);
   const [letter, setLetter] = useState<IssuedLetter | null>(null);
   const [issueError, setIssueError] = useState("");
@@ -90,6 +94,8 @@ export function AcceptanceLetter({
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
+    setError("");
     const load = async () => {
       try {
         const student = await authApi.getStudentDetails(authToken);
@@ -107,9 +113,8 @@ export function AcceptanceLetter({
           setDetails(fallbackDetails);
           return;
         }
-        const message = err instanceof Error ? err.message : "Unable to load student details";
-        setError(message);
-        toast.error(message);
+        // Shown on the page itself (with "Try again"), so no toast as well
+        setError(err instanceof Error ? err.message : "Unable to load student details");
       } finally {
         if (active) setLoading(false);
       }
@@ -118,7 +123,7 @@ export function AcceptanceLetter({
     return () => {
       active = false;
     };
-  }, [authToken, fallbackDetails]);
+  }, [authToken, fallbackDetails, reloadKey]);
 
   const studentId = details?.id || (authToken ? "" : localStorage.getItem("userId")) || "";
   // The issued letter carries the internship period and hours, which the certificate page needs
@@ -232,16 +237,13 @@ export function AcceptanceLetter({
     return (
       <main className="acceptance-letter-page">
         {header}
-        <div className="acceptance-letter-loading">
-          {loading ? (
-            <>
-              <div className="spinner" />
-              <p>Loading your acceptance letter...</p>
-            </>
-          ) : (
-            <p className="error-message">{error}</p>
-          )}
-        </div>
+        {loading ? (
+          <LetterPageSkeleton />
+        ) : (
+          <div className="letter-load-error">
+            <ErrorState title="Couldn't load your acceptance letter" message={error} onRetry={() => setReloadKey((key) => key + 1)} />
+          </div>
+        )}
       </main>
     );
   }
@@ -361,5 +363,43 @@ export function AcceptanceLetter({
         </div>
       </section>
     </main>
+  );
+}
+
+// The letter page's shape while it loads: heading and button, an A4-shaped preview, and the info cards
+function LetterPageSkeleton() {
+  return (
+    <SkeletonRegion label="Loading your acceptance letter" className="acceptance-letter-content fg-letter-layout">
+      <div className="fg-letter-column">
+        <div className="fg-letter-toolbar">
+          <div style={{ flex: 1 }}>
+            <Skeleton width={220} height={26} />
+            <Skeleton width="70%" height={14} style={{ marginTop: 10 }} />
+          </div>
+          <Skeleton width={140} height={40} radius={10} />
+        </div>
+        {/* A4 proportions, like the letter itself */}
+        <Skeleton height="auto" radius={8} style={{ aspectRatio: "794 / 1123", maxWidth: 794 }} />
+      </div>
+      <div className="acceptance-letter-info">
+        <Card className="info-card">
+          <Skeleton width={150} height={18} />
+          <Skeleton width="80%" height={22} style={{ marginTop: 12 }} />
+          <Skeleton width="55%" height={12} style={{ marginTop: 10 }} />
+        </Card>
+        <Card className="info-card">
+          <Skeleton width={150} height={18} />
+          <div style={{ marginTop: 12 }}>
+            <SkeletonText lines={3} lastWidth="40%" />
+          </div>
+        </Card>
+        <Card className="info-card">
+          <Skeleton width={130} height={18} />
+          <div style={{ marginTop: 12 }}>
+            <SkeletonText lines={8} lastWidth="50%" gap={10} />
+          </div>
+        </Card>
+      </div>
+    </SkeletonRegion>
   );
 }

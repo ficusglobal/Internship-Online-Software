@@ -3,8 +3,10 @@ import { Mail, MailPlus } from "lucide-react";
 import { adminApi, type AdminBatch, type AdminCollege, type AdminStudentRow, type WhatsappGroup } from "../../lib/admin-api";
 import { useListView } from "../../lib/use-list-view";
 import { DropdownSelector } from "../../shared/components/dropdown-selector";
+import { ErrorState } from "../../shared/components/error-state";
 import { Modal } from "../../shared/components/modal";
 import { Pagination } from "../../shared/components/pagination";
+import { PersonListSkeleton, TableSkeleton } from "../../shared/components/skeleton";
 import { toast } from "../../shared/components/toast";
 import { Input } from "../../shared/components/ui";
 import {
@@ -51,6 +53,7 @@ export function WhatsappSection() {
   const rows = useRowAction();
   // The group whose link is about to be emailed, and whether to include students who already got it
   const [sender, setSender] = useState<{ group: WhatsappGroup; resend: boolean } | null>(null);
+  const [optionsKey, setOptionsKey] = useState(0);
   const latest = useRef(0);
 
   useEffect(() => {
@@ -60,7 +63,7 @@ export function WhatsappSection() {
         setBatches(batchList);
       })
       .catch((err: unknown) => setOptionsError(describeError(err).message));
-  }, []);
+  }, [optionsKey]);
 
   useEffect(() => {
     const request = ++latest.current;
@@ -98,7 +101,15 @@ export function WhatsappSection() {
       text="One group per college and batch. Only https://chat.whatsapp.com/ invite links are accepted."
       actions={<AddButton label="Add group" onClick={() => setEditor({})} />}
     >
-      {optionsError && <FormAlert message={optionsError} />}
+      {optionsError && (
+        <FormAlert
+          message={`Some filters could not be loaded: ${optionsError}`}
+          onRetry={() => {
+            setOptionsError("");
+            setOptionsKey((key) => key + 1);
+          }}
+        />
+      )}
       <div className="admin-toolbar">
         <label>
           College
@@ -111,10 +122,11 @@ export function WhatsappSection() {
         <SearchInput value={view.query} onChange={view.setQuery} placeholder="Search groups" label="Search groups" />
       </div>
 
-      {listError && <FormAlert message={listError} />}
-      {groups === null && !listError ? (
-        <Loading label="Loading groups…" />
-      ) : groups && groups.length === 0 ? (
+      {listError ? (
+        <ErrorState title="Couldn't load WhatsApp groups" message={listError} onRetry={reload} />
+      ) : groups === null ? (
+        <TableSkeleton headers={["Group", "College", "Batch", "Status", "Actions"]} rows={6} rowHeight={84} label="Loading WhatsApp groups" />
+      ) : groups.length === 0 ? (
         <EmptyState
           text={collegeId || batchId ? "No WhatsApp groups match these filters." : "No WhatsApp groups yet."}
           actionLabel="Add group"
@@ -326,7 +338,7 @@ function SendLinksModal({ group, resend, onClose }: { group: WhatsappGroup; rese
         </p>
         {error && <FormAlert message={`Could not load the student list: ${error}`} />}
         {recipients === null && !error ? (
-          <Loading label="Loading students…" />
+          <PersonListSkeleton rows={4} label="Loading students" />
         ) : recipients && recipients.length === 0 ? (
           <p className="admin-empty">No paid students in this college and batch yet.</p>
         ) : recipients ? (

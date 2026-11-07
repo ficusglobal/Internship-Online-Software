@@ -1,6 +1,7 @@
 import { Check, ChevronDown } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { cn } from "../../lib/utils";
+import "../../styles/dropdown-fit.css";
 
 interface DropdownOption {
   label: string;
@@ -11,6 +12,9 @@ interface DropdownSelectorProps {
   ariaLabel?: string;
   className?: string;
   disabled?: boolean;
+  /** Opens the list as a fixed layer positioned from the trigger, so a scrolling or clipping parent (a card body with
+   *  a sticky footer) can never hide it. It opens upwards when there is more room above. */
+  floating?: boolean;
   onBlur?: () => void;
   onValueChange: (value: string) => void;
   options: DropdownOption[];
@@ -23,6 +27,7 @@ export function DropdownSelector({
   ariaLabel,
   className,
   disabled = false,
+  floating = false,
   onBlur,
   onValueChange,
   options,
@@ -32,6 +37,8 @@ export function DropdownSelector({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const root = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const [placement, setPlacement] = useState<CSSProperties | undefined>();
   const selected = options.find((option) => option.value === value);
   const filteredOptions = options.filter((option) =>
     option.label.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
@@ -46,6 +53,34 @@ export function DropdownSelector({
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [onBlur]);
+  const place = useCallback(() => {
+    const box = trigger.current?.getBoundingClientRect();
+    if (!box) return;
+    const gap = 6;
+    const below = window.innerHeight - box.bottom - gap - 8;
+    const above = box.top - gap - 8;
+    const up = below < 240 && above > below;
+    const room = Math.max(160, Math.min(352, up ? above : below));
+    setPlacement({
+      position: "fixed",
+      left: box.left,
+      width: box.width,
+      right: "auto",
+      maxHeight: room,
+      zIndex: 1000,
+      ...(up ? { top: "auto", bottom: window.innerHeight - box.top + gap } : { top: box.bottom + gap, bottom: "auto" }),
+    });
+  }, []);
+  useLayoutEffect(() => {
+    if (!floating || !open) return;
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [floating, open, place]);
   const choose = (nextValue: string) => {
     onValueChange(nextValue);
     setQuery("");
@@ -74,14 +109,16 @@ export function DropdownSelector({
         aria-label={ariaLabel}
         aria-expanded={open}
         aria-haspopup="listbox"
+        title={selected?.label}
         disabled={disabled}
+        ref={trigger}
         onClick={toggle}
       >
         <span className={cn("dropdown-value", !selected && "is-placeholder")}>{selected?.label ?? placeholder ?? "Select an option"}</span>
         <ChevronDown size={16} />
       </button>
       {open && (
-        <div className="dropdown-menu" role="listbox" aria-label={ariaLabel}>
+        <div className="dropdown-menu" role="listbox" aria-label={ariaLabel} style={floating ? placement ?? { visibility: "hidden" } : undefined}>
           <input
             className="dropdown-search"
             value={query}

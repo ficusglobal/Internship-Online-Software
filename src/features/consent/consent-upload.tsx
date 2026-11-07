@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { consentApi, type ConsentSummary } from "../../lib/auth-api";
 import { CONSENT_ACCEPT, CONSENT_MAX_MB, checkConsentFile, openFile } from "../../lib/consent";
 import { toast } from "../../shared/components/toast";
+import { Skeleton } from "../../shared/components/skeleton";
 import { Button } from "../../shared/components/ui";
 import "../../styles/consent.css";
 
@@ -105,9 +106,12 @@ export function ConsentUpload({ registrationId, authToken, onChange }: ConsentUp
   if (!summary) {
     return (
       <div className="consent-box">
-        <p className="registration-status" role="status">
-          <LoaderCircle className="spin" size={16} /> Checking the consent letter… / जाँच हो रही है…
-        </p>
+        <div role="status" aria-busy="true" aria-label="Checking the consent letter">
+          {/* Status line, file picker and button: the three things the loaded box shows */}
+          <Skeleton height={40} radius={10} />
+          <Skeleton height={44} radius={10} style={{ marginTop: 12 }} />
+          <Skeleton height={40} width={150} radius={10} style={{ marginTop: 12 }} />
+        </div>
       </div>
     );
   }

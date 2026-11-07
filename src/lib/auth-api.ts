@@ -265,7 +265,21 @@ export class ApiError extends Error {
 function fallbackMessage(status: number): string {
   if (status === 401) return "Your session has expired. Please sign in again.";
   if (status === 403) return "You do not have permission to do this. Sign in with an account that has access.";
+  if (status === 429) return "Too many requests. Please wait a moment and try again.";
+  if (status >= 500) return "The server ran into a problem. Please try again in a moment.";
   return "Unable to complete your request. Please try again.";
+}
+
+// fetch() rejects (instead of returning a response) when the server cannot be reached at all:
+// offline, DNS, CORS or a dropped connection. status 0 marks that case.
+const UNREACHABLE = "Cannot reach the server. Check your internet connection and try again.";
+
+async function send(path: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(`${API_BASE_URL}${path}`, init);
+  } catch {
+    throw new ApiError(UNREACHABLE, 0);
+  }
 }
 
 async function toApiError(response: Response): Promise<ApiError> {
@@ -298,7 +312,7 @@ export async function request<T>(
   init?: RequestInit,
   auth: boolean | string = false,
 ): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await send(path, {
     ...init,
     headers: {
       ...(typeof init?.body === "string" ? { "Content-Type": "application/json" } : {}),
@@ -312,7 +326,7 @@ export async function request<T>(
 
 // For endpoints that return a file (e.g. the consent letter) instead of JSON
 export async function requestBlob(path: string, auth: boolean | string = true): Promise<Blob> {
-  const response = await fetch(`${API_BASE_URL}${path}`, { headers: bearer(auth) });
+  const response = await send(path, { headers: bearer(auth) });
   if (!response.ok) throw await toApiError(response);
   return response.blob();
 }

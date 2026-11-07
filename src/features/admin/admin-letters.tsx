@@ -3,7 +3,9 @@ import { Eye } from "lucide-react";
 import { adminApi, type AdminAcademicSession, type AdminCollege, type AdminLetter } from "../../lib/admin-api";
 import { useListView } from "../../lib/use-list-view";
 import { DropdownSelector } from "../../shared/components/dropdown-selector";
+import { ErrorState } from "../../shared/components/error-state";
 import { Pagination } from "../../shared/components/pagination";
+import { TableSkeleton } from "../../shared/components/skeleton";
 import { byName, describeError, EmptyState, FormAlert, Loading, Panel, SearchInput } from "./admin-ui";
 
 // Issued acceptance letters, searched by college and session (read-only: letters are issued after payment)
@@ -16,6 +18,8 @@ export function LettersSection({ onOpenStudent }: { onOpenStudent: (studentId: s
   const [optionsError, setOptionsError] = useState("");
   const [letters, setLetters] = useState<AdminLetter[] | null>(null);
   const [error, setError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+  const [optionsKey, setOptionsKey] = useState(0);
   const latest = useRef(0);
 
   useEffect(() => {
@@ -25,7 +29,7 @@ export function LettersSection({ onOpenStudent }: { onOpenStudent: (studentId: s
         setSessions([...sessionList].sort((a, b) => b.name.localeCompare(a.name)));
       })
       .catch((err: unknown) => setOptionsError(describeError(err).message));
-  }, []);
+  }, [optionsKey]);
 
   // Searches on first open and whenever a filter changes
   useEffect(() => {
@@ -36,7 +40,7 @@ export function LettersSection({ onOpenStudent }: { onOpenStudent: (studentId: s
       .letters({ collegeCode: collegeCode || undefined, academicSession: session || undefined })
       .then((list) => request === latest.current && setLetters(list))
       .catch((err: unknown) => request === latest.current && setError(describeError(err).message));
-  }, [collegeCode, session]);
+  }, [collegeCode, session, reloadKey]);
 
   const view = useListView(
     letters,
@@ -46,7 +50,15 @@ export function LettersSection({ onOpenStudent }: { onOpenStudent: (studentId: s
 
   return (
     <Panel title="Acceptance letters" text="Letters issued after payment. Filter by college and session, or search by letter number or student.">
-      {optionsError && <FormAlert message={optionsError} />}
+      {optionsError && (
+        <FormAlert
+          message={`Some filters could not be loaded: ${optionsError}`}
+          onRetry={() => {
+            setOptionsError("");
+            setOptionsKey((key) => key + 1);
+          }}
+        />
+      )}
       <div className="admin-toolbar">
         <label>
           College
@@ -68,10 +80,11 @@ export function LettersSection({ onOpenStudent }: { onOpenStudent: (studentId: s
         </label>
         <SearchInput value={view.query} onChange={view.setQuery} placeholder="Search by letter number or student" label="Search letters" />
       </div>
-      {error && <FormAlert message={error} />}
-      {letters === null && !error ? (
-        <Loading label="Searching letters…" />
-      ) : letters && letters.length === 0 ? (
+      {error ? (
+        <ErrorState title="Couldn't load acceptance letters" message={error} onRetry={() => setReloadKey((key) => key + 1)} />
+      ) : letters === null ? (
+        <TableSkeleton headers={["Letter no.", "Student", "College", "Session", "Issued", "Details"]} rows={8} rowHeight={60} label="Loading acceptance letters" />
+      ) : letters.length === 0 ? (
         <EmptyState text="No letters match this search." />
       ) : view.rows && view.matches === 0 ? (
         <EmptyState text={`No letters match “${view.query.trim()}”.`} />

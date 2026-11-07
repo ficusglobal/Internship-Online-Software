@@ -1,6 +1,7 @@
-import { LoaderCircle, MessageCircle } from "lucide-react";
+import { MessageCircle, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ApiError, whatsappGroupApi, type StudentGroup } from "../../lib/auth-api";
+import { Skeleton } from "../../shared/components/skeleton";
 import { Card } from "../../shared/components/ui";
 
 // The backend only stores https://chat.whatsapp.com/ invite links; anything else is not rendered as a link
@@ -16,16 +17,21 @@ interface WhatsappGroupCardProps {
 export function WhatsappGroupCard({ registrationId, authToken }: WhatsappGroupCardProps) {
   const [group, setGroup] = useState<StudentGroup | null>(null);
   const [message, setMessage] = useState("");
+  // Only a real failure (not "no group yet") can be retried
+  const [retryable, setRetryable] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
     setGroup(null);
     setMessage("");
+    setRetryable(false);
     whatsappGroupApi
       .forRegistration(registrationId, authToken)
       .then((result) => active && setGroup(result))
       .catch((error: unknown) => {
         if (!active) return;
+        setRetryable(!(error instanceof ApiError && error.status === 404));
         setMessage(
           error instanceof ApiError && error.status === 404
             ? "Your WhatsApp group is not ready yet. The link will be emailed to you. / ग्रुप लिंक ईमेल से भेजा जाएगा।"
@@ -37,7 +43,7 @@ export function WhatsappGroupCard({ registrationId, authToken }: WhatsappGroupCa
     return () => {
       active = false;
     };
-  }, [registrationId, authToken]);
+  }, [registrationId, authToken, reloadKey]);
 
   const safeUrl = group?.groupUrl?.startsWith(INVITE_PREFIX) ? group.groupUrl : "";
 
@@ -56,11 +62,19 @@ export function WhatsappGroupCard({ registrationId, authToken }: WhatsappGroupCa
           )}
         </>
       ) : message ? (
-        <small>{message}</small>
+        <>
+          <small>{message}</small>
+          {retryable && (
+            <button type="button" className="button button-outline" onClick={() => setReloadKey((key) => key + 1)}>
+              <RefreshCw size={14} /> Try again
+            </button>
+          )}
+        </>
       ) : (
-        <small role="status">
-          <LoaderCircle className="spin" size={14} /> Loading…
-        </small>
+        <div role="status" aria-busy="true">
+          <Skeleton height={16} width="70%" />
+          <Skeleton height={40} width={170} radius={10} style={{ marginTop: 12 }} />
+        </div>
       )}
     </Card>
   );

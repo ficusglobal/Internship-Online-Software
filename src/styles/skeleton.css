@@ -1,0 +1,173 @@
+/* Loading placeholders (shared/components/skeleton.tsx) and failure states (error-state.tsx).
+   Placeholders take the size of the real content, so loading never shifts the layout (CLS). */
+
+.skeleton {
+  display: block;
+  max-width: 100%;
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--muted) 15%, var(--surface)) 30%,
+    color-mix(in srgb, var(--muted) 6%, var(--surface)) 50%,
+    color-mix(in srgb, var(--muted) 15%, var(--surface)) 70%
+  );
+  background-size: 300% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton-text {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+@keyframes skeleton-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+/* Visible to screen readers only */
+.skeleton-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skeleton-table-region {
+  display: grid;
+  gap: 18px;
+}
+
+.skeleton-table-wrap .admin-table td,
+.skeleton-table-wrap .admin-table th {
+  pointer-events: none;
+}
+
+.skeleton-pager {
+  margin-top: 4px;
+}
+
+.skeleton-people {
+  display: grid;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.skeleton-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+}
+
+.skeleton-person .skeleton-text {
+  flex: 1;
+  max-width: 280px;
+}
+
+/* ---- failure state */
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 220px;
+  padding: 28px 20px;
+  border: 1px solid color-mix(in srgb, #ef4444 28%, var(--border));
+  border-radius: 14px;
+  background: color-mix(in srgb, #ef4444 5%, var(--surface));
+  text-align: center;
+}
+
+.error-state-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: color-mix(in srgb, #ef4444 14%, var(--surface));
+  color: #b42318;
+}
+
+.error-state-text {
+  display: grid;
+  gap: 4px;
+  max-width: 34rem;
+}
+
+.error-state-text strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.error-state-text p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.error-state .error-state-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-state.is-compact {
+  flex-direction: row;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-height: 0;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.error-state.is-compact .error-state-icon {
+  width: 34px;
+  height: 34px;
+}
+
+.error-state.is-compact .error-state-text {
+  flex: 1 1 200px;
+}
+
+.error-state.is-compact .error-state-text strong {
+  font-size: 14px;
+}
+
+.error-state.is-compact .error-state-text p {
+  font-size: 13px;
+}
+
+/* Student-facing pages */
+.letter-load-error {
+  width: 100%;
+  max-width: 40rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+.registration-status-loading {
+  display: flex;
+  align-items: center;
+  min-height: 2.6rem;
+}

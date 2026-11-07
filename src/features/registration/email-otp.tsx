@@ -23,6 +23,8 @@ interface EmailOtpProps<Result> {
   autoSend?: boolean;
   // Defaults to the existing-account endpoints (/auth/email/send-otp and /auth/email/verify-otp)
   api?: EmailOtpApi<Result>;
+  // Called when sending a code is refused, so the owner can react (e.g. "this email is already registered")
+  onSendFailed?: (error: unknown) => void;
 }
 
 // 6-digit email code. By default it verifies an existing account's email; the registration form passes
@@ -34,6 +36,7 @@ export function EmailOtp<Result = MessageResult>({
   codeSent = false,
   autoSend = false,
   api = emailVerificationApi as unknown as EmailOtpApi<Result>,
+  onSendFailed,
 }: EmailOtpProps<Result>) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState<"" | "sending" | "verifying">("");
@@ -61,6 +64,7 @@ export function EmailOtp<Result = MessageResult>({
       const message = err instanceof Error ? err.message : "Unable to send the code.";
       setError(message);
       toast.error(message);
+      onSendFailed?.(err);
     } finally {
       setBusy("");
     }
@@ -107,6 +111,13 @@ export function EmailOtp<Result = MessageResult>({
             aria-label="Email verification code"
             value={code}
             onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+            enterKeyHint="done"
+            onKeyDown={(event) => {
+              // Enter checks the code; it must not submit the surrounding form (which would move to the next step)
+              if (event.key !== "Enter") return;
+              event.preventDefault();
+              if (code.length === 6 && busy === "") void verify();
+            }}
           />
           <Button type="button" disabled={busy !== "" || code.length !== 6} onClick={() => void verify()}>
             {busy === "verifying" && <LoaderCircle className="spin" size={16} />}

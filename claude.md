@@ -22,8 +22,11 @@ cyber-cafe assisted registration, acceptance letters with QR verification, and a
   next to `authToken`; an expired token signs the user out. The JWT carries no role claim, so an admin session saved without
   `accountRole` is discarded (sign in again). `logout()` clears them.
 - `src/features/auth/auth.tsx` — public landing, role picker, login/registration screens (`SignIn`). `forgot-password-flow.tsx` (same folder) is the student reset.
-- `src/features/registration/student-registration-form.tsx` — 6-step student registration
-  (details → internship/account → verify email → review (creates the account) → consent letter → pay).
+- `src/features/registration/student-registration-form.tsx` — 5-step student registration
+  (verify mobile + email → details (personal + college/course) → academic → review (creates the account) → consent letter + pay).
+  Progress is saved in `sessionStorage` (`registration-draft.ts`; never passwords or the terms checkbox), restored after a reload
+  (dependent lists reloaded, created account resumed at the last step) and cleared on completion or "Start over".
+  Dropdowns in the form use `DropdownSelector floating` (fixed layer, opens upward when short of room) so the card's scrolling body/footer never hide them.
   `mode="self" | "cyber-cafe"`. Calls `onComplete(response, message, snapshot)`. `email-otp.tsx` (same folder) is the code box;
   it takes an `api` prop (`registrationEmailApi` before registration, default `emailVerificationApi` for an existing account).
 - `src/features/consent/consent-upload.tsx` — consent letter status/upload/view, used by the form (step 5) and the letter page.
@@ -54,6 +57,12 @@ cyber-cafe assisted registration, acceptance letters with QR verification, and a
     while it is open (`{editor && <XModal …/>}`) so each opening starts from fresh values.
   - Deleting or emailing asks first in a confirm modal (`confirmAction`, host mounted in `AdminDashboard`), never `window.confirm`.
   - Row actions go through `useRowAction` (busy state, toast, confirm). Server field errors show inline in the modal.
+- **Loading and failures** (every screen that calls the API): while data loads show a skeleton shaped like the loaded content
+  (`shared/components/skeleton.tsx`: `TableSkeleton` takes the real column headings and row height; `SkeletonRegion` announces
+  "Loading" to screen readers) so nothing moves when data arrives (CLS ≈ 0). When a request fails show `ErrorState`
+  (`shared/components/error-state.tsx`: what failed, the reason, "Try again"), never a blank area. `lib/auth-api.ts` turns a
+  network failure into status 0 "Cannot reach the server…" and a 5xx into a readable message. `useAsync` (`lib/use-async.ts`)
+  gives `{data, error, loading, reload}` for one request. A "not found" answer (404) is a normal result, not an error state.
 - `src/lib/cache.ts` — 5-minute cache for public master data; admin writes clear the public lists they affect.
 - Shared UI in `src/shared/components/`; all global CSS in `src/styles/`. Screens are lazy-loaded (`App.tsx`).
 - Styles are global CSS files imported from `main.tsx`/components (`styles.css` is minified; add new styles in separate files,

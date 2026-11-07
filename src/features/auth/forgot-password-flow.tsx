@@ -122,13 +122,14 @@ export function ForgotPasswordFlow({
   };
 
   return (
-    <div className="forgot-password">
+    <div className="forgot-flow">
       <div className="forgot-password-steps" aria-label="Password reset steps">
         <span className={stage === "email" ? "active" : "complete"}>
-          {stage === "reset" && <CheckCircle2 size={14} />} 1. Email
+          <i>{stage === "reset" ? <CheckCircle2 size={14} /> : 1}</i> Email
         </span>
+        <span className="forgot-password-line" aria-hidden="true" />
         <span className={stage === "reset" ? "active" : ""}>
-          2. Code &amp; new password
+          <i>2</i> Code &amp; new password
         </span>
       </div>
 
@@ -215,6 +216,10 @@ export function ForgotPasswordFlow({
               {error}
             </p>
           )}
+          <Button type="submit" disabled={busy}>
+            {busy && <LoaderCircle className="spin" size={16} />}
+            Reset password / पासवर्ड रीसेट करें <ArrowRight size={16} />
+          </Button>
           <div className="forgot-password-actions">
             <Button
               type="button"
@@ -227,17 +232,8 @@ export function ForgotPasswordFlow({
             >
               Change email
             </Button>
-            <Button
-              type="button"
-              className="button-outline"
-              onClick={resend}
-              disabled={busy || resendIn > 0}
-            >
+            <Button type="button" className="button-outline" onClick={resend} disabled={busy || resendIn > 0}>
               {resendIn > 0 ? `Resend in ${resendIn}s` : "Resend code"}
-            </Button>
-            <Button type="submit" disabled={busy}>
-              {busy && <LoaderCircle className="spin" size={16} />}
-              Reset password / पासवर्ड रीसेट करें <ArrowRight size={16} />
             </Button>
           </div>
         </form>

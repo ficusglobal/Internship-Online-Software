@@ -5,7 +5,9 @@ import { consentApi, type ConsentStatus, type ConsentSummary } from "../../lib/a
 import { openFile } from "../../lib/consent";
 import { useListView } from "../../lib/use-list-view";
 import { DropdownSelector } from "../../shared/components/dropdown-selector";
+import { ErrorState } from "../../shared/components/error-state";
 import { Pagination } from "../../shared/components/pagination";
+import { TableSkeleton } from "../../shared/components/skeleton";
 import { toast } from "../../shared/components/toast";
 import { describeError, EmptyState, FormAlert, FormModal, Loading, Panel, RowActions, SearchInput, StatusBadge, useRowAction } from "./admin-ui";
 
@@ -85,10 +87,11 @@ export function ConsentsSection() {
         <SearchInput value={view.query} onChange={view.setQuery} placeholder="Search by student, email, mobile or college" label="Search consent letters" />
       </div>
 
-      {error && <FormAlert message={error} />}
-      {items === null && !error ? (
-        <Loading label="Loading consent letters…" />
-      ) : items && items.length === 0 ? (
+      {error ? (
+        <ErrorState title="Couldn't load consent letters" message={error} onRetry={reload} />
+      ) : items === null ? (
+        <TableSkeleton headers={["Student", "College / Batch", "Registration", "Consent", "Reviewed", "Actions"]} rows={6} rowHeight={72} label="Loading consent letters" />
+      ) : items.length === 0 ? (
         <EmptyState text="No consent letters in this list." />
       ) : view.rows && view.matches === 0 ? (
         <EmptyState text={`No consent letters match “${view.query.trim()}”.`} />

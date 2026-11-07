@@ -1,7 +1,9 @@
-import { Building2, GraduationCap, LogOut } from "lucide-react";
+import { GraduationCap, LogOut } from "lucide-react";
 import { useState } from "react";
 import { AcceptanceLetter } from "../letter/acceptance-letter";
 import { StudentRegistrationForm } from "../registration/student-registration-form";
+import "../../styles/registration-flow.css";
+import "../../styles/cafe.css";
 import { toast } from "../../shared/components/toast";
 import { Button } from "../../shared/components/ui";
 import type { StudentDetails } from "../../lib/auth-api";
@@ -36,13 +38,14 @@ export function CyberCafeWorkspace({ onLogout }: CyberCafeWorkspaceProps) {
   }
 
   return (
-    <main className="acceptance-letter-page">
+    <main className="acceptance-letter-page cafe-page">
       <header className="acceptance-letter-header">
         <div className="acceptance-letter-brand">
           <span className="brand-mark">
             <GraduationCap size={20} />
           </span>
           Ficus Global
+          <span className="cafe-badge">Cyber cafe workspace</span>
         </div>
         <div className="acceptance-letter-actions">
           <Button className="button-outline" onClick={onLogout}>
@@ -50,27 +53,16 @@ export function CyberCafeWorkspace({ onLogout }: CyberCafeWorkspaceProps) {
           </Button>
         </div>
       </header>
-      <section className="cafe-workspace">
-        <div className="auth-card cafe-workspace-card">
-          <div className="auth-card-heading">
-            <span className="auth-eyebrow">
-              <Building2 size={14} /> CYBER CAFE · STUDENT REGISTRATION
-            </span>
-            <h2>Register a student</h2>
-            <p>
-              Fill in the student's details, collect the internship fee, and download their acceptance
-              letter once registration completes.
-            </p>
-          </div>
-          <StudentRegistrationForm
-            key={formKey}
-            mode="cyber-cafe"
-            onComplete={(response, message, snapshot) => {
-              toast.success(message);
-              setRegistered({ token: response.token, snapshot });
-            }}
-          />
-        </div>
+      {/* The registration card brings its own heading, stepper and buttons */}
+      <section className="cafe-workspace reg-stage">
+        <StudentRegistrationForm
+          key={formKey}
+          mode="cyber-cafe"
+          onComplete={(response, message, snapshot) => {
+            toast.success(message);
+            setRegistered({ token: response.token, snapshot });
+          }}
+        />
       </section>
     </main>
   );

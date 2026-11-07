@@ -2,7 +2,9 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { adminApi, type AdminCollege, type AdminDistrict, type AdminUniversity } from "../../lib/admin-api";
 import { useListView } from "../../lib/use-list-view";
 import { DropdownSelector } from "../../shared/components/dropdown-selector";
+import { ErrorState } from "../../shared/components/error-state";
 import { Pagination } from "../../shared/components/pagination";
+import { TableSkeleton } from "../../shared/components/skeleton";
 import { Input } from "../../shared/components/ui";
 import {
   ActiveBadge,
@@ -95,10 +97,11 @@ export function CollegesSection({ universities, districts }: MasterProps) {
         <SearchInput value={view.query} onChange={view.setQuery} placeholder="Search colleges by name, code or city" label="Search colleges" />
       </div>
 
-      {listError && <FormAlert message={listError} />}
-      {colleges === null && !listError ? (
-        <Loading label="Loading colleges…" />
-      ) : colleges && colleges.length === 0 ? (
+      {listError ? (
+        <ErrorState title="Couldn't load colleges" message={listError} onRetry={reload} />
+      ) : colleges === null ? (
+        <TableSkeleton headers={["Name", "Code", "University / District", "City", "Status", "Actions"]} rows={10} label="Loading colleges" />
+      ) : colleges.length === 0 ? (
         <EmptyState
           text={universityId || districtId ? "No colleges match these filters." : "No colleges yet."}
           actionLabel="Add college"

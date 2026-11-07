@@ -77,6 +77,8 @@ export function AdminDashboard({ name, accountRole, onLogout }: AdminDashboardPr
   const [universities, setUniversities] = useState<AdminUniversity[]>([]);
   const [districts, setDistricts] = useState<AdminDistrict[]>([]);
   const [loadError, setLoadError] = useState("");
+  // False until the first load of universities and districts finishes (later reloads keep showing the old lists)
+  const [mastersLoaded, setMastersLoaded] = useState(false);
   const [masterKey, setMasterKey] = useState(0);
 
   // Universities and districts feed several sections, so they are loaded once here (SUPER_ADMIN only)
@@ -87,6 +89,7 @@ export function AdminDashboard({ name, accountRole, onLogout }: AdminDashboardPr
       .then(([uni, dist]) => {
         setUniversities(byName(uni));
         setDistricts(byName(dist));
+        setMastersLoaded(true);
       })
       .catch((err: unknown) => setLoadError(describeError(err).message));
   }, [superAdmin]);
@@ -185,7 +188,8 @@ export function AdminDashboard({ name, accountRole, onLogout }: AdminDashboardPr
         </nav>
 
         <main className="admin-main">
-          {loadError && (
+          {/* The universities and overview screens show this failure themselves, each with its own retry */}
+          {loadError && section !== "masters" && section !== "overview" && (
             <p className="admin-alert" role="alert">
               {loadError}{" "}
               <button type="button" className="admin-link" onClick={() => setMasterKey((key) => key + 1)}>
@@ -203,12 +207,27 @@ export function AdminDashboard({ name, accountRole, onLogout }: AdminDashboardPr
           )}
           {superAdmin && (
             <>
-              {section === "overview" && <Overview name={name} universities={universities} districts={districts} onNavigate={choose} onOpenStudent={openStudent} />}
+              {section === "overview" && <Overview
+                  name={name}
+                  universities={universities}
+                  districts={districts}
+                  mastersLoading={!mastersLoaded && !loadError}
+                  mastersError={mastersLoaded ? "" : loadError}
+                  onReloadMasters={() => setMasterKey((key) => key + 1)}
+                  onNavigate={choose}
+                  onOpenStudent={openStudent}
+                />}
               {section === "consents" && <ConsentsSection />}
               {section === "colleges" && <CollegesSection universities={universities} districts={districts} />}
               {section === "courses" && <CoursesSection />}
               {section === "masters" && (
-                <MastersSection universities={universities} districts={districts} onChanged={() => setMasterKey((key) => key + 1)} />
+                <MastersSection
+                  universities={universities}
+                  districts={districts}
+                  loading={!mastersLoaded && !loadError}
+                  error={mastersLoaded ? "" : loadError}
+                  onChanged={() => setMasterKey((key) => key + 1)}
+                />
               )}
               {section === "reference" && (
                 <>

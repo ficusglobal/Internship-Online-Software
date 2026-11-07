@@ -1,5 +1,6 @@
-import { CheckCircle2, LoaderCircle, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Skeleton } from "../../shared/components/skeleton";
 import { Card } from "../../shared/components/ui";
 import { ApiError, authApi, type StudentDetails } from "../../lib/auth-api";
 
@@ -14,6 +15,7 @@ type VerificationResult =
 
 export function AcceptanceLetterVerification({ studentId }: AcceptanceLetterVerificationProps) {
   const [result, setResult] = useState<VerificationResult>({ status: "loading" });
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -40,15 +42,19 @@ export function AcceptanceLetterVerification({ studentId }: AcceptanceLetterVeri
     return () => {
       active = false;
     };
-  }, [studentId]);
+  }, [studentId, reloadKey]);
 
   if (result.status === "loading") {
     return (
       <main className="verification-page">
         <div className="verification-container">
-          <div className="verification-loading">
-            <LoaderCircle className="spin" size={48} />
-            <p>Verifying acceptance letter...</p>
+          {/* Same card as the result, so the page does not change size when the answer arrives */}
+          <div role="status" aria-busy="true" aria-label="Verifying acceptance letter">
+            <Card className="verification-card">
+              <Skeleton width={64} height={64} radius="full" style={{ margin: "0 auto" }} />
+              <Skeleton width="60%" height={28} style={{ margin: "24px auto 12px" }} />
+              <Skeleton width="80%" height={14} style={{ margin: "0 auto" }} />
+            </Card>
           </div>
         </div>
       </main>
@@ -63,6 +69,9 @@ export function AcceptanceLetterVerification({ studentId }: AcceptanceLetterVeri
             <XCircle size={64} className="error-icon" />
             <h1>Verification unavailable</h1>
             <p>{result.message}</p>
+            <button type="button" className="button button-outline" onClick={() => setReloadKey((key) => key + 1)}>
+              Try again
+            </button>
           </Card>
         </div>
       </main>

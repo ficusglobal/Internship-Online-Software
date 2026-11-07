@@ -1,32 +1,27 @@
 import { AlertTriangle, ArrowRight, BadgeCheck, Building2, Clock, FileCheck2, FileText, type LucideIcon, Users } from "lucide-react";
-import { useEffect, useState } from "react";
-import { adminApi, type AdminDistrict, type AdminStudentRow, type AdminUniversity } from "../../lib/admin-api";
+import { adminApi, type AdminDistrict, type AdminUniversity } from "../../lib/admin-api";
+import { useAsync, type AsyncState } from "../../lib/use-async";
+import { ErrorState } from "../../shared/components/error-state";
+import { Skeleton, SkeletonRegion } from "../../shared/components/skeleton";
 import { Avatar, StatusBadge } from "./admin-ui";
-
-interface OverviewData {
-  total?: number;
-  enrolled?: number;
-  registered?: number;
-  consents?: number;
-  letters?: number;
-  colleges?: number;
-  collegesWithoutCode?: number;
-  courses?: number;
-  sessions?: number;
-  subjects?: number;
-  recent?: AdminStudentRow[];
-}
 
 interface OverviewProps {
   name: string;
   universities: AdminUniversity[];
   districts: AdminDistrict[];
+  // The dashboard loads universities and districts itself; until then (or if that failed) their counts are unknown
+  mastersLoading: boolean;
+  mastersError: string;
+  onReloadMasters: () => void;
   onNavigate: (section: string) => void;
   onOpenStudent: (studentId: string) => void;
 }
 
 const number = new Intl.NumberFormat("en-IN");
 const show = (value?: number) => (value === undefined ? "—" : number.format(value));
+
+// Counts and lists come from separate requests; the helpers below turn one into its display value
+const total = (page: { total?: number }) => page.total;
 
 const greeting = () => {
   const hour = new Date().getHours();
@@ -39,80 +34,78 @@ interface KpiProps {
   icon: LucideIcon;
   tone: "brand" | "ok" | "warn" | "info";
   label: string;
-  value?: number;
+  state: AsyncState<number>;
   hint: string;
   onClick: () => void;
 }
 
-function Kpi({ icon: Icon, tone, label, value, hint, onClick }: KpiProps) {
+// A figure that opens its section. While loading it holds the number's exact height (no jump when it arrives);
+// if its request failed it says so and a click retries instead of navigating.
+function Kpi({ icon: Icon, tone, label, state, hint, onClick }: KpiProps) {
+  const failed = Boolean(state.error);
   return (
-    <button type="button" className={`ov-kpi is-${tone}`} onClick={onClick}>
+    <button type="button" className={`ov-kpi is-${tone} ${failed ? "has-error" : ""}`} onClick={failed ? state.reload : onClick} title={failed ? state.error : undefined}>
       <span className="ov-kpi-icon">
         <Icon size={20} />
       </span>
       <span className="ov-kpi-body">
         <span className="ov-kpi-label">{label}</span>
-        <strong className={value === undefined ? "is-loading" : undefined}>{show(value)}</strong>
-        <small>{hint}</small>
+        {state.loading && state.data === undefined ? <Skeleton width={64} height={32} radius={8} className="ov-kpi-skeleton" /> : <strong className={failed ? "is-loading" : undefined}>{show(state.data)}</strong>}
+        <small>{failed ? "Couldn't load. Retry" : hint}</small>
       </span>
       <ArrowRight size={16} className="ov-kpi-arrow" />
     </button>
   );
 }
 
+const plural = (count: number, one: string, many: string) => (count === 1 ? one : many);
+
 // SUPER_ADMIN landing page: what needs attention, how registrations are doing, and shortcuts into each area.
 // Every number is fetched on its own, so a failed request leaves one dash instead of breaking the page.
-export function Overview({ name, universities, districts, onNavigate, onOpenStudent }: OverviewProps) {
-  const [data, setData] = useState<OverviewData>({});
+export function Overview({ name, universities, districts, mastersLoading, mastersError, onReloadMasters, onNavigate, onOpenStudent }: OverviewProps) {
+  // Page size 1: only the total is wanted
+  const students = useAsync(() => adminApi.students({ size: 1 }).then(total) as Promise<number>);
+  const enrolled = useAsync(() => adminApi.students({ status: "ENROLLED", size: 1 }).then(total) as Promise<number>);
+  const registered = useAsync(() => adminApi.students({ status: "REGISTERED", size: 1 }).then(total) as Promise<number>);
+  const consents = useAsync(() => adminApi.consents("PENDING").then((list) => list.length));
+  const letters = useAsync(() => adminApi.letters({}).then((list) => list.length));
+  const colleges = useAsync(() => adminApi.colleges());
+  const courses = useAsync(() => adminApi.courses().then((list) => list.length));
+  const sessions = useAsync(() => adminApi.academicSessions().then((list) => list.length));
+  const subjects = useAsync(() => adminApi.majorSubjects().then((list) => list.length));
+  const recent = useAsync(() =>
+    adminApi.students({ size: 100 }).then((page) => [...page.rows].sort((a, b) => (b.registeredAt ?? "").localeCompare(a.registeredAt ?? "")).slice(0, 6)),
+  );
 
-  useEffect(() => {
-    let current = true;
-    const put = (patch: OverviewData) => current && setData((previous) => ({ ...previous, ...patch }));
-    const ignore = () => undefined;
-
-    // Page size 1: only the total is wanted
-    adminApi.students({ size: 1 }).then((page) => put({ total: page.total })).catch(ignore);
-    adminApi.students({ status: "ENROLLED", size: 1 }).then((page) => put({ enrolled: page.total })).catch(ignore);
-    adminApi.students({ status: "REGISTERED", size: 1 }).then((page) => put({ registered: page.total })).catch(ignore);
-    adminApi
-      .students({ size: 100 })
-      .then((page) => {
-        const latest = [...page.rows].sort((a, b) => (b.registeredAt ?? "").localeCompare(a.registeredAt ?? "")).slice(0, 6);
-        put({ recent: latest });
-      })
-      .catch(ignore);
-    adminApi.consents("PENDING").then((list) => put({ consents: list.length })).catch(ignore);
-    adminApi.letters({}).then((list) => put({ letters: list.length })).catch(ignore);
-    adminApi
-      .colleges()
-      .then((list) => put({ colleges: list.length, collegesWithoutCode: list.filter((college) => !college.code?.trim() && college.active !== false).length }))
-      .catch(ignore);
-    adminApi.courses().then((list) => put({ courses: list.length })).catch(ignore);
-    adminApi.academicSessions().then((list) => put({ sessions: list.length })).catch(ignore);
-    adminApi.majorSubjects().then((list) => put({ subjects: list.length })).catch(ignore);
-    return () => {
-      current = false;
-    };
-  }, []);
+  const all = [students, enrolled, registered, consents, letters, colleges, courses, sessions, subjects, recent] as Array<AsyncState<unknown>>;
+  const failed = all.filter((state) => state.error);
+  const retryFailed = () => failed.forEach((state) => state.reload());
 
   const firstName = name.trim().split(/\s+/)[0] || "there";
-  const known = (data.enrolled ?? 0) + (data.registered ?? 0);
-  const paidShare = known > 0 ? Math.round(((data.enrolled ?? 0) / known) * 100) : 0;
+  const known = (enrolled.data ?? 0) + (registered.data ?? 0);
+  const paidShare = known > 0 ? Math.round(((enrolled.data ?? 0) / known) * 100) : 0;
+  const withoutCode = colleges.data?.filter((college) => !college.code?.trim() && college.active !== false).length ?? 0;
 
   const attention: Array<{ text: string; count: number; section: string }> = [];
-  const plural = (count: number, one: string, many: string) => (count === 1 ? one : many);
-  if (data.consents) attention.push({ text: plural(data.consents, "consent letter is waiting for review", "consent letters are waiting for review"), count: data.consents, section: "consents" });
-  if (data.registered) attention.push({ text: plural(data.registered, "student has not paid yet", "students have not paid yet"), count: data.registered, section: "students" });
-  if (data.collegesWithoutCode) attention.push({ text: plural(data.collegesWithoutCode, "active college has no code (letters cannot be issued)", "active colleges have no code (letters cannot be issued)"), count: data.collegesWithoutCode, section: "colleges" });
+  if (consents.data) attention.push({ text: plural(consents.data, "consent letter is waiting for review", "consent letters are waiting for review"), count: consents.data, section: "consents" });
+  if (registered.data) attention.push({ text: plural(registered.data, "student has not paid yet", "students have not paid yet"), count: registered.data, section: "students" });
+  if (withoutCode) attention.push({ text: plural(withoutCode, "active college has no code (letters cannot be issued)", "active colleges have no code (letters cannot be issued)"), count: withoutCode, section: "colleges" });
 
-  const setup: Array<{ label: string; value?: number; section: string }> = [
-    { label: "Universities", value: universities.length, section: "masters" },
-    { label: "Districts", value: districts.length, section: "masters" },
-    { label: "Colleges", value: data.colleges, section: "colleges" },
-    { label: "Courses", value: data.courses, section: "courses" },
-    { label: "Academic sessions", value: data.sessions, section: "reference" },
-    { label: "Major subjects", value: data.subjects, section: "reference" },
+  // Shaped like a request's state so the Setup rows treat all counts the same way
+  const mastersState: AsyncState<unknown> = { data: undefined, loading: mastersLoading, error: mastersError, reload: onReloadMasters };
+  const setup: Array<{ label: string; state?: AsyncState<unknown>; value?: number; section: string }> = [
+    { label: "Universities", state: mastersState, value: universities.length, section: "masters" },
+    { label: "Districts", state: mastersState, value: districts.length, section: "masters" },
+    { label: "Colleges", state: colleges, value: colleges.data?.length, section: "colleges" },
+    { label: "Courses", state: courses, value: courses.data, section: "courses" },
+    { label: "Academic sessions", state: sessions, value: sessions.data, section: "reference" },
+    { label: "Major subjects", state: subjects, value: subjects.data, section: "reference" },
   ];
+
+  const attentionLoading = (consents.loading && consents.data === undefined) || (registered.loading && registered.data === undefined) || (colleges.loading && colleges.data === undefined);
+  const attentionError = consents.error || registered.error || colleges.error;
+  const progressLoading = (enrolled.loading && enrolled.data === undefined) || (registered.loading && registered.data === undefined);
+  const progressError = enrolled.error || registered.error;
 
   return (
     <div className="ov">
@@ -134,11 +127,21 @@ export function Overview({ name, universities, districts, onNavigate, onOpenStud
         </div>
       </header>
 
+      {/* One banner for any failed request; each failed figure also says so itself */}
+      {failed.length > 0 && (
+        <ErrorState
+          compact
+          title={`${failed.length} ${plural(failed.length, "figure", "figures")} could not be loaded`}
+          message={failed[0].error}
+          onRetry={retryFailed}
+        />
+      )}
+
       <div className="ov-kpis">
-        <Kpi icon={Users} tone="brand" label="Total students" value={data.total} hint="All registrations" onClick={() => onNavigate("students")} />
-        <Kpi icon={BadgeCheck} tone="ok" label="Enrolled" value={data.enrolled} hint="Payment received" onClick={() => onNavigate("students")} />
-        <Kpi icon={Clock} tone="warn" label="Payment pending" value={data.registered} hint="Registered, not paid" onClick={() => onNavigate("students")} />
-        <Kpi icon={FileText} tone="info" label="Letters issued" value={data.letters} hint="Acceptance letters" onClick={() => onNavigate("letters")} />
+        <Kpi icon={Users} tone="brand" label="Total students" state={students} hint="All registrations" onClick={() => onNavigate("students")} />
+        <Kpi icon={BadgeCheck} tone="ok" label="Enrolled" state={enrolled} hint="Payment received" onClick={() => onNavigate("students")} />
+        <Kpi icon={Clock} tone="warn" label="Payment pending" state={registered} hint="Registered, not paid" onClick={() => onNavigate("students")} />
+        <Kpi icon={FileText} tone="info" label="Letters issued" state={letters} hint="Acceptance letters" onClick={() => onNavigate("letters")} />
       </div>
 
       <div className="ov-grid">
@@ -146,20 +149,39 @@ export function Overview({ name, universities, districts, onNavigate, onOpenStud
           <section className="ov-card">
             <header className="ov-card-head">
               <h3>Registration progress</h3>
-              <span className="ov-card-note">{known > 0 ? `${paidShare}% paid` : ""}</span>
+              <span className="ov-card-note">{known > 0 && !progressError ? `${paidShare}% paid` : ""}</span>
             </header>
-            <div className="ov-bar" role="img" aria-label={`${data.enrolled ?? 0} enrolled, ${data.registered ?? 0} payment pending`}>
-              <span className="ov-bar-ok" style={{ width: `${known > 0 ? ((data.enrolled ?? 0) / known) * 100 : 0}%` }} />
-              <span className="ov-bar-warn" style={{ width: `${known > 0 ? ((data.registered ?? 0) / known) * 100 : 0}%` }} />
-            </div>
-            <ul className="ov-legend">
-              <li>
-                <i className="is-ok" /> Enrolled <b>{show(data.enrolled)}</b>
-              </li>
-              <li>
-                <i className="is-warn" /> Payment pending <b>{show(data.registered)}</b>
-              </li>
-            </ul>
+            {progressError ? (
+              <ErrorState
+                compact
+                title="Couldn't load registration progress"
+                message={progressError}
+                onRetry={() => {
+                  enrolled.reload();
+                  registered.reload();
+                }}
+              />
+            ) : progressLoading ? (
+              <SkeletonRegion label="Loading registration progress" className="ov-progress-skeleton">
+                <Skeleton height={12} radius={999} />
+                <Skeleton height={18} width="55%" />
+              </SkeletonRegion>
+            ) : (
+              <>
+                <div className="ov-bar" role="img" aria-label={`${enrolled.data ?? 0} enrolled, ${registered.data ?? 0} payment pending`}>
+                  <span className="ov-bar-ok" style={{ width: `${known > 0 ? ((enrolled.data ?? 0) / known) * 100 : 0}%` }} />
+                  <span className="ov-bar-warn" style={{ width: `${known > 0 ? ((registered.data ?? 0) / known) * 100 : 0}%` }} />
+                </div>
+                <ul className="ov-legend">
+                  <li>
+                    <i className="is-ok" /> Enrolled <b>{show(enrolled.data)}</b>
+                  </li>
+                  <li>
+                    <i className="is-warn" /> Payment pending <b>{show(registered.data)}</b>
+                  </li>
+                </ul>
+              </>
+            )}
           </section>
 
           <section className="ov-card">
@@ -169,13 +191,26 @@ export function Overview({ name, universities, districts, onNavigate, onOpenStud
                 View all
               </button>
             </header>
-            {data.recent === undefined ? (
-              <p className="admin-muted">Loading…</p>
-            ) : data.recent.length === 0 ? (
+            {recent.error ? (
+              <ErrorState compact title="Couldn't load recent registrations" message={recent.error} onRetry={recent.reload} />
+            ) : recent.data === undefined ? (
+              <SkeletonRegion label="Loading recent registrations" className="ov-recent ov-recent-skeleton">
+                {Array.from({ length: 6 }, (_, index) => (
+                  <div className="ov-recent-skeleton-row" key={index}>
+                    <Skeleton width={32} height={32} radius="full" />
+                    <span className="ov-recent-main">
+                      <Skeleton width="42%" height={14} />
+                      <Skeleton width="70%" height={12} style={{ marginTop: 6 }} />
+                    </span>
+                    <Skeleton width={96} height={22} radius={999} />
+                  </div>
+                ))}
+              </SkeletonRegion>
+            ) : recent.data.length === 0 ? (
               <p className="admin-muted">No registrations yet.</p>
             ) : (
               <ul className="ov-recent">
-                {data.recent.map((row, index) => (
+                {recent.data.map((row, index) => (
                   <li key={row.registrationId ?? row.studentId ?? index}>
                     <button type="button" onClick={() => row.studentId && onOpenStudent(row.studentId)} disabled={!row.studentId}>
                       <Avatar name={row.studentName} size="sm" />
@@ -200,7 +235,23 @@ export function Overview({ name, universities, districts, onNavigate, onOpenStud
             <header className="ov-card-head">
               <h3>Needs attention</h3>
             </header>
-            {attention.length === 0 ? (
+            {attentionError ? (
+              <ErrorState
+                compact
+                title="Couldn't check what needs attention"
+                message={attentionError}
+                onRetry={() => {
+                  consents.reload();
+                  registered.reload();
+                  colleges.reload();
+                }}
+              />
+            ) : attentionLoading ? (
+              <SkeletonRegion label="Checking what needs attention" className="ov-attention-skeleton">
+                <Skeleton height={42} radius={10} />
+                <Skeleton height={42} radius={10} />
+              </SkeletonRegion>
+            ) : attention.length === 0 ? (
               <p className="ov-clear">
                 <BadgeCheck size={18} /> You are all caught up.
               </p>
@@ -230,9 +281,9 @@ export function Overview({ name, universities, districts, onNavigate, onOpenStud
             <ul className="ov-setup">
               {setup.map((item) => (
                 <li key={item.label}>
-                  <button type="button" onClick={() => onNavigate(item.section)}>
+                  <button type="button" onClick={() => (item.state?.error ? item.state.reload() : onNavigate(item.section))} title={item.state?.error || undefined}>
                     <span>{item.label}</span>
-                    <b>{show(item.value)}</b>
+                    {item.state?.loading && (item.state === mastersState || item.value === undefined) ? <Skeleton width={28} height={16} /> : item.state?.error ? <b className="ov-setup-error">Retry</b> : <b>{show(item.value)}</b>}
                   </button>
                 </li>
               ))}

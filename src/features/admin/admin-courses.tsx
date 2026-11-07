@@ -2,7 +2,9 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { adminApi, type AdminBatch, type AdminCourse } from "../../lib/admin-api";
 import { useListView } from "../../lib/use-list-view";
 import { DropdownSelector } from "../../shared/components/dropdown-selector";
+import { ErrorState } from "../../shared/components/error-state";
 import { Pagination } from "../../shared/components/pagination";
+import { TableSkeleton } from "../../shared/components/skeleton";
 import { Input } from "../../shared/components/ui";
 import {
   ActiveBadge,
@@ -112,10 +114,11 @@ export function CoursesSection() {
         text="Courses are shared by all universities. Inactive courses are hidden from the registration form."
         actions={<AddButton label="Add course" onClick={() => setCourseEditor({})} />}
       >
-        {courseError && <FormAlert message={courseError} />}
-        {courses === null && !courseError ? (
-          <Loading label="Loading courses…" />
-        ) : courses && courses.length === 0 ? (
+        {courseError ? (
+          <ErrorState title="Couldn't load courses" message={courseError} onRetry={reloadCourses} />
+        ) : courses === null ? (
+          <TableSkeleton headers={["Name", "Code", "Hours (theory / practical / report)", "Total", "Status", "Actions"]} rows={2} rowHeight={57} toolbar label="Loading courses" />
+        ) : courses.length === 0 ? (
           <EmptyState text="No courses yet." actionLabel="Add course" onAction={() => setCourseEditor({})} />
         ) : courseView.rows ? (
           <>
@@ -182,10 +185,11 @@ export function CoursesSection() {
           <SearchInput value={batchView.query} onChange={batchView.setQuery} placeholder="Search batches by name or course" label="Search batches" />
         </div>
 
-        {batchError && <FormAlert message={batchError} />}
-        {batches === null && !batchError ? (
-          <Loading label="Loading batches…" />
-        ) : batches && batches.length === 0 ? (
+        {batchError ? (
+          <ErrorState title="Couldn't load batches" message={batchError} onRetry={reloadBatches} />
+        ) : batches === null ? (
+          <TableSkeleton headers={["Batch", "Course", "Start – End", "Fee", "Max", "Status", "Actions"]} rows={4} rowHeight={68} label="Loading batches" />
+        ) : batches.length === 0 ? (
           <EmptyState text={courseId ? "No batches for this course yet." : "No batches yet."} actionLabel="Add batch" onAction={() => setBatchEditor({})} />
         ) : batchView.rows && batchView.matches === 0 ? (
           <EmptyState text={`No batches match “${batchView.query.trim()}”.`} />

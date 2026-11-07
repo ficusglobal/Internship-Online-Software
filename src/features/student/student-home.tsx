@@ -1,6 +1,8 @@
 import { Award, BookOpen, CalendarCheck, FileText, GraduationCap, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 import { acceptanceLetterApi, ApiError, authApi, type AcceptanceLetter, type StudentDetails } from "../../lib/auth-api";
+import { ErrorState } from "../../shared/components/error-state";
+import { Skeleton, SkeletonRegion } from "../../shared/components/skeleton";
 import { Button } from "../../shared/components/ui";
 import "../../styles/student-home.css";
 import "../../styles/consent.css";
@@ -26,10 +28,14 @@ const GENDER_LABELS: Record<string, string> = { MALE: "Male", FEMALE: "Female", 
 // the other options are placeholders until those screens are built.
 export function StudentHome({ name, onOpenLetter, onLogout }: StudentHomeProps) {
   const [status, setStatus] = useState<LetterStatus | null>(null);
-  const [failed, setFailed] = useState(false);
+  // The failure message (empty = none); "Try again" runs the load again
+  const [failed, setFailed] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
+    setFailed("");
+    setStatus(null);
     const load = async () => {
       try {
         const student = await authApi.getStudentDetails();
@@ -42,15 +48,15 @@ export function StudentHome({ name, onOpenLetter, onLogout }: StudentHomeProps) 
         if (active) {
           setStatus({ letter, paid: ISSUED_STATUSES.has(student.registrationStatus ?? ""), student });
         }
-      } catch {
-        if (active) setFailed(true);
+      } catch (err) {
+        if (active) setFailed(err instanceof Error && err.message ? err.message : "We could not load your details.");
       }
     };
     void load();
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadKey]);
 
   const letterMessage = () => {
     if (!status) return "Checking your acceptance letter…";
@@ -87,11 +93,15 @@ export function StudentHome({ name, onOpenLetter, onLogout }: StudentHomeProps) 
           <p>Choose what you want to open. Your details will appear here.</p>
         </div>
 
-        <div className={`student-home-status ${status?.letter ? "is-issued" : ""}`} role="status">
-          {failed ? "We could not load your status. Please refresh the page." : letterMessage()}
-        </div>
+        {failed ? (
+          <ErrorState title="We could not load your details" message={failed} onRetry={() => setReloadKey((key) => key + 1)} />
+        ) : (
+          <div className={`student-home-status ${status?.letter ? "is-issued" : ""}`} role="status">
+            {status ? letterMessage() : <Skeleton height={16} width="60%" />}
+          </div>
+        )}
 
-        {status && <StudentProfile student={status.student} />}
+        {status ? <StudentProfile student={status.student} /> : !failed && <StudentProfileSkeleton />}
 
         <div className="student-home-grid">
           {options.map((option) => {
@@ -159,5 +169,22 @@ function StudentProfile({ student }: { student: Partial<StudentDetails> }) {
           ))}
       </dl>
     </section>
+  );
+}
+
+// Same card as StudentProfile: heading, then label/value rows
+function StudentProfileSkeleton() {
+  return (
+    <SkeletonRegion label="Loading your details" className="student-profile">
+      <Skeleton width={180} height={22} />
+      <dl>
+        {Array.from({ length: 10 }, (_, index) => (
+          <div key={index}>
+            <Skeleton width="40%" height={12} />
+            <Skeleton width="75%" height={16} style={{ marginTop: 8 }} />
+          </div>
+        ))}
+      </dl>
+    </SkeletonRegion>
   );
 }
