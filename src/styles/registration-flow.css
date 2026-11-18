@@ -920,6 +920,7 @@ button.reg-step-button:focus-visible .reg-step-dot {
 /* The consent box and payment summary come from their own styles; give them the card's full width */
 .reg-fields > .consent-box,
 .reg-fields > .payment-summary,
+.reg-fields > .pay-wrap,
 .reg-fields > .registration-status,
 .reg-fields > .payment-method-title {
   grid-column: 1 / -1;
@@ -1128,5 +1129,107 @@ button.reg-step-button:focus-visible .reg-step-dot {
   .reg-step::before,
   .reg-step-dot {
     transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------- polish: read-only fields, payment, phones */
+
+/* A locked field (the email while its code is pending) must not look focused */
+.reg-card input[readonly]:focus {
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+/* Payment step: the student's details, compact rows */
+.reg-card .payment-summary {
+  padding: 4px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.reg-card .payment-row {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.86rem;
+}
+
+.reg-card .payment-row > span {
+  color: var(--muted);
+}
+
+.reg-card .payment-row > b {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.reg-card .payment-row.payment-total {
+  border-bottom: 0;
+  padding: 12px 0 10px;
+  font-size: 1rem;
+}
+
+.reg-card .payment-row.payment-total > span,
+.reg-card .payment-row.payment-total > b {
+  color: var(--purple);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.reg-card .payment-method-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.reg-card .payment-method-title svg {
+  flex: none;
+  margin-top: 1px;
+  color: #15803d;
+}
+
+.reg-card .reg-hint-flat {
+  min-height: 0;
+  margin: 0;
+}
+
+@media (max-width: 639px) {
+  /* The card gives as much room as possible to the form */
+  .reg-head {
+    padding: 10px 16px;
+  }
+
+  .reg-stepper {
+    padding: 10px 16px 10px;
+  }
+
+  .reg-stepper-summary {
+    margin-bottom: 8px;
+  }
+
+  .reg-foot {
+    gap: 8px;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .reg-saved {
+    font-size: 0.72rem;
+  }
+
+  .reg-card .button {
+    min-height: 44px;
+  }
+
+  .reg-card .payment-row {
+    flex-wrap: wrap;
+    gap: 2px 12px;
+  }
+
+  .reg-card .payment-row > b {
+    flex: 1 1 8rem;
   }
 }

@@ -11,7 +11,7 @@ cyber-cafe assisted registration, acceptance letters with QR verification, and a
 ## Configuration (`.env`, see `.env.example`)
 - `VITE_API_BASE_URL` — backend base **including `/api`** (default `https://internshipwale.com/api`, local `http://localhost:8080/api`).
   API paths in code are relative to it (`/auth/login`, `/student/me`), so never prefix paths with `/api` again.
-- `VITE_RAZORPAY_KEY_ID` — Razorpay **key id** (public). Default is the project's test key `rzp_test_Td9wQnOjLMAsLD`
+- `VITE_RAZORPAY_KEY_ID` — Razorpay **key id** (public). Default is the project's live key `rzp_live_U1b00PCcUb2jrH` (real charges)
   (must match backend `razorpay.key.id`). The key *secret* belongs only on the backend.
 - Both are read in `src/constants/api.ts`.
 

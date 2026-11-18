@@ -1,15 +1,15 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Check, Eye, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Check, ExternalLink, FileSearch, LoaderCircle, RotateCcw, X } from "lucide-react";
 import { adminApi } from "../../lib/admin-api";
 import { consentApi, type ConsentStatus, type ConsentSummary } from "../../lib/auth-api";
-import { openFile } from "../../lib/consent";
 import { useListView } from "../../lib/use-list-view";
 import { DropdownSelector } from "../../shared/components/dropdown-selector";
 import { ErrorState } from "../../shared/components/error-state";
 import { Pagination } from "../../shared/components/pagination";
 import { TableSkeleton } from "../../shared/components/skeleton";
 import { toast } from "../../shared/components/toast";
-import { describeError, EmptyState, FormAlert, FormModal, Loading, Panel, RowActions, SearchInput, StatusBadge, useRowAction } from "./admin-ui";
+import { describeError, EmptyState, Panel, SearchInput, StatusBadge } from "./admin-ui";
+import "../../styles/admin-consent-review.css";
 
 // ConsentReviewService: a rejection needs a reason of at most 500 characters
 const REASON_MAX = 500;
@@ -34,8 +34,8 @@ export function ConsentsSection() {
     colleges: new Map(),
     batches: new Map(),
   });
-  const [rejecting, setRejecting] = useState<ConsentSummary | null>(null);
-  const rows = useRowAction();
+  // The consent letter open on the Review page (null = the list is shown)
+  const [reviewing, setReviewing] = useState<ConsentSummary | null>(null);
   const latest = useRef(0);
 
   // College and batch names for the list (the consent summary only carries their ids)
@@ -67,18 +67,27 @@ export function ConsentsSection() {
     status,
   );
 
-  const openConsentFile = (registrationId: string) => {
-    openFile(() => consentApi.download(registrationId)).catch((err: unknown) => toast.error(describeError(err).message));
-  };
+  const namesOf = (item: ConsentSummary) => ({
+    college: item.collegeId !== undefined ? names.colleges.get(item.collegeId) ?? `College #${item.collegeId}` : undefined,
+    batch: item.batchId !== undefined ? names.batches.get(item.batchId) ?? `Batch #${item.batchId}` : undefined,
+  });
 
-  const approve = (item: ConsentSummary) => {
-    void rows
-      .run(item.registrationId, () => adminApi.reviewConsent(item.registrationId, { status: "APPROVED" }), "Consent letter approved.")
-      .then((ok) => ok && reload());
-  };
+  if (reviewing) {
+    return (
+      <ConsentReview
+        item={reviewing}
+        {...namesOf(reviewing)}
+        onBack={() => setReviewing(null)}
+        onReviewed={() => {
+          setReviewing(null);
+          reload();
+        }}
+      />
+    );
+  }
 
   return (
-    <Panel title="Consent letters" text="Students upload a consent letter before paying. Approve it, or reject it with a reason the student will see.">
+    <Panel title="Consent letters" text="Students upload a consent letter before paying. Open one to review it: approve it, or reject it with a reason the student will see.">
       <div className="admin-toolbar">
         <label>
           Show
@@ -114,12 +123,8 @@ export function ConsentsSection() {
                   <ConsentRow
                     key={item.registrationId}
                     item={item}
-                    college={item.collegeId !== undefined ? names.colleges.get(item.collegeId) : undefined}
-                    batch={item.batchId !== undefined ? names.batches.get(item.batchId) : undefined}
-                    busy={rows.busyKey === item.registrationId}
-                    onView={() => openConsentFile(item.registrationId)}
-                    onApprove={() => approve(item)}
-                    onReject={() => setRejecting(item)}
+                    {...namesOf(item)}
+                    onReview={() => setReviewing(item)}
                   />
                 ))}
               </tbody>
@@ -129,16 +134,6 @@ export function ConsentsSection() {
         </>
       ) : null}
 
-      {rejecting && (
-        <RejectModal
-          item={rejecting}
-          onClose={() => setRejecting(null)}
-          onRejected={() => {
-            setRejecting(null);
-            reload();
-          }}
-        />
-      )}
     </Panel>
   );
 }
@@ -147,13 +142,11 @@ interface ConsentRowProps {
   item: ConsentSummary;
   college?: string;
   batch?: string;
-  busy: boolean;
-  onView: () => void;
-  onApprove: () => void;
-  onReject: () => void;
+  onReview: () => void;
 }
 
-function ConsentRow({ item, college, batch, busy, onView, onApprove, onReject }: ConsentRowProps) {
+function ConsentRow({ item, college, batch, onReview }: ConsentRowProps) {
+  const rejected = item.consentStatus === "REJECTED";
   return (
     <tr>
       <td>
@@ -161,8 +154,8 @@ function ConsentRow({ item, college, batch, busy, onView, onApprove, onReject }:
         <small className="admin-subtext">{[item.email, item.mobileNo].filter(Boolean).join(" · ")}</small>
       </td>
       <td>
-        {college ?? (item.collegeId !== undefined ? `College #${item.collegeId}` : "—")}
-        <small className="admin-subtext">{batch ?? (item.batchId !== undefined ? `Batch #${item.batchId}` : "")}</small>
+        {college ?? "—"}
+        <small className="admin-subtext">{batch ?? ""}</small>
       </td>
       <td>{item.registrationStatus ?? "—"}</td>
       <td>
@@ -171,76 +164,204 @@ function ConsentRow({ item, college, batch, busy, onView, onApprove, onReject }:
       </td>
       <td>{formatDateTime(item.reviewedAt)}</td>
       <td>
-        <RowActions busy={busy}>
-          <button type="button" className="admin-icon-button" onClick={onView} disabled={busy} title="View file" aria-label="View file">
-            <Eye size={15} />
-          </button>
-          {item.consentStatus !== "APPROVED" && (
-            <button type="button" className="admin-icon-button is-ok" onClick={onApprove} disabled={busy} title="Approve" aria-label="Approve">
-              <Check size={15} />
-            </button>
-          )}
-          {item.consentStatus !== "REJECTED" && (
-            <button type="button" className="admin-icon-button is-danger" onClick={onReject} disabled={busy} title="Reject" aria-label="Reject">
-              <X size={15} />
-            </button>
-          )}
-        </RowActions>
+        {/* One button: "Review" opens the Review page; a rejected letter is opened again with "Reverify" */}
+        <button type="button" className={`button admin-review-button ${rejected ? "is-reverify" : ""}`} onClick={onReview}>
+          {rejected ? <RotateCcw size={15} /> : <FileSearch size={15} />} {rejected ? "Reverify" : "Review"}
+        </button>
       </td>
     </tr>
   );
 }
 
-// Rejecting needs a reason the student will see
-function RejectModal({ item, onClose, onRejected }: { item: ConsentSummary; onClose: () => void; onRejected: () => void }) {
+interface ConsentReviewProps {
+  item: ConsentSummary;
+  college?: string;
+  batch?: string;
+  onBack: () => void;
+  onReviewed: () => void;
+}
+
+// The Review page: the uploaded letter next to the student's details, with Approve and Reject.
+function ConsentReview({ item, college, batch, onBack, onReviewed }: ConsentReviewProps) {
+  const reverify = item.consentStatus === "REJECTED";
+  const approved = item.consentStatus === "APPROVED";
+  const [file, setFile] = useState<{ url: string; type: string } | null>(null);
+  const [fileError, setFileError] = useState("");
+  const [fileKey, setFileKey] = useState(0);
+  const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState(item.rejectionReason ?? "");
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"" | "approving" | "rejecting">("");
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    const text = reason.trim();
-    if (!text) return setError("Give a reason, so the student knows what to correct");
-    if (text.length > REASON_MAX) return setError(`The reason can be at most ${REASON_MAX} characters`);
-    setBusy(true);
+  // The letter is loaded as a file and shown on the page (not in a new tab)
+  useEffect(() => {
+    let url = "";
+    let active = true;
+    setFile(null);
+    setFileError("");
+    consentApi
+      .download(item.registrationId)
+      .then((blob) => {
+        if (!active) return;
+        url = URL.createObjectURL(blob);
+        setFile({ url, type: blob.type });
+      })
+      .catch((err: unknown) => active && setFileError(describeError(err).message));
+    return () => {
+      active = false;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [item.registrationId, fileKey]);
+
+  const approve = async () => {
+    setBusy("approving");
     setError("");
     try {
-      await adminApi.reviewConsent(item.registrationId, { status: "REJECTED", reason: text });
-      toast.success("Consent letter rejected.");
-      onRejected();
+      await adminApi.reviewConsent(item.registrationId, { status: "APPROVED" });
+      toast.success("Consent letter approved.");
+      onReviewed();
     } catch (err) {
       const message = describeError(err).message;
       setError(message);
       toast.error(message);
-      setBusy(false);
+      setBusy("");
     }
   };
 
+  const reject = async () => {
+    const text = reason.trim();
+    if (!text) return setError("Give a reason, so the student knows what to correct");
+    if (text.length > REASON_MAX) return setError(`The reason can be at most ${REASON_MAX} characters`);
+    setBusy("rejecting");
+    setError("");
+    try {
+      await adminApi.reviewConsent(item.registrationId, { status: "REJECTED", reason: text });
+      toast.success("Consent letter rejected.");
+      onReviewed();
+    } catch (err) {
+      const message = describeError(err).message;
+      setError(message);
+      toast.error(message);
+      setBusy("");
+    }
+  };
+
+  const details: Array<[string, string | undefined]> = [
+    ["Student", item.studentName],
+    ["Email", item.email],
+    ["Mobile", item.mobileNo],
+    ["College", college],
+    ["Batch", batch],
+    ["Registration", item.registrationStatus],
+    ["Last reviewed", item.reviewedAt ? formatDateTime(item.reviewedAt) : undefined],
+  ];
+  const isImage = file?.type.startsWith("image/");
+
   return (
-    <FormModal
-      title="Reject consent letter"
-      description={item.studentName ? `For ${item.studentName}. The student sees this reason.` : "The student sees this reason."}
-      onClose={onClose}
-      onSubmit={(event) => void submit(event)}
-      busy={busy}
-      formError={error}
-      submitLabel="Reject consent letter"
+    <Panel
+      title={reverify ? "Reverify consent letter" : "Review consent letter"}
+      text={reverify ? "This letter was rejected. Check the student's new upload, then approve it or reject it again." : "Check the letter, then approve it or reject it with a reason the student will see."}
+      actions={
+        <button type="button" className="button button-outline" onClick={onBack} disabled={busy !== ""}>
+          <ArrowLeft size={16} /> Back to consent letters
+        </button>
+      }
     >
-      <label className="admin-reject-form">
-        Reason for rejection *
-        <textarea
-          className="admin-textarea"
-          rows={4}
-          maxLength={REASON_MAX}
-          value={reason}
-          onChange={(event) => {
-            setReason(event.target.value);
-            setError("");
-          }}
-          placeholder="e.g. The letter is not signed by the principal"
-        />
-        <small className="admin-subtext">{reason.trim().length}/{REASON_MAX}</small>
-      </label>
-    </FormModal>
+      <div className="admin-review">
+        <section className="admin-review-file" aria-label="Uploaded consent letter">
+          {fileError ? (
+            <ErrorState title="Couldn't load the letter" message={fileError} onRetry={() => setFileKey((key) => key + 1)} />
+          ) : !file ? (
+            <div className="admin-review-loading" role="status" aria-busy="true">
+              <LoaderCircle className="spin" size={22} /> Loading the letter…
+            </div>
+          ) : isImage ? (
+            <img src={file.url} alt={`Consent letter of ${item.studentName ?? "the student"}`} />
+          ) : (
+            <iframe title="Consent letter" src={file.url} />
+          )}
+          {file && (
+            <a className="admin-review-open" href={file.url} target="_blank" rel="noreferrer">
+              <ExternalLink size={14} /> Open in a new tab
+            </a>
+          )}
+        </section>
+
+        <aside className="admin-review-side">
+          <div className="admin-review-card">
+            <div className="admin-review-status">
+              <span>Consent status</span>
+              <StatusBadge status={item.consentStatus} />
+            </div>
+            {item.rejectionReason && (
+              <p className="admin-review-reason">
+                <b>Earlier rejection:</b> {item.rejectionReason}
+              </p>
+            )}
+            <dl>
+              {details
+                .filter(([, value]) => value)
+                .map(([label, value]) => (
+                  <div key={label}>
+                    <dt>{label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+            </dl>
+          </div>
+
+          <div className="admin-review-card admin-review-decision">
+            {error && (
+              <p className="admin-review-error" role="alert">
+                {error}
+              </p>
+            )}
+            {rejecting ? (
+              <label className="admin-reject-form">
+                Reason for rejection *
+                <textarea
+                  className="admin-textarea"
+                  rows={4}
+                  maxLength={REASON_MAX}
+                  value={reason}
+                  autoFocus
+                  onChange={(event) => {
+                    setReason(event.target.value);
+                    setError("");
+                  }}
+                  placeholder="e.g. The letter is not signed by the principal"
+                />
+                <small className="admin-subtext">
+                  The student sees this reason. {reason.trim().length}/{REASON_MAX}
+                </small>
+              </label>
+            ) : null}
+            <div className="admin-review-actions">
+              {rejecting ? (
+                <>
+                  <button type="button" className="button button-outline" onClick={() => { setRejecting(false); setError(""); }} disabled={busy !== ""}>
+                    Cancel
+                  </button>
+                  <button type="button" className="button button-danger" onClick={() => void reject()} disabled={busy !== ""}>
+                    {busy === "rejecting" ? <LoaderCircle className="spin" size={16} /> : <X size={16} />} Reject letter
+                  </button>
+                </>
+              ) : (
+                <>
+                  {!approved && (
+                    <button type="button" className="button admin-approve" onClick={() => void approve()} disabled={busy !== "" || !file}>
+                      {busy === "approving" ? <LoaderCircle className="spin" size={16} /> : <Check size={16} />} Approve
+                    </button>
+                  )}
+                  <button type="button" className="button button-outline admin-reject" onClick={() => setRejecting(true)} disabled={busy !== ""}>
+                    <X size={16} /> {reverify ? "Reject again" : "Reject"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </aside>
+      </div>
+    </Panel>
   );
 }

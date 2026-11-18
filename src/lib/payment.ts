@@ -18,6 +18,8 @@ interface RazorpayOptions {
   description: string;
   order_id?: string;
   prefill: { name: string; email: string; contact: string };
+  // Locks the prefilled values, so the dialog shows the student's own details and they cannot be changed there
+  readonly?: { name?: boolean; email?: boolean; contact?: boolean };
   notes?: Record<string, string>;
   theme: { color: string };
   handler: (response: RazorpaySuccessResponse) => void;
@@ -37,6 +39,8 @@ declare global {
 
 export interface PaymentRequest {
   amount: number;
+  // The heading of the Checkout dialog (default "Ficus Global"); the student's name goes here because Checkout shows it large
+  title?: string;
   description: string;
   customer: { name: string; email: string; contact: string };
   notes?: Record<string, string>;
@@ -85,15 +89,22 @@ export async function collectPayment(request: PaymentRequest): Promise<PaymentRe
   const Razorpay = window.Razorpay;
   if (!Razorpay) throw new Error("Payment gateway is unavailable. Please try again.");
 
+  // The order was created by the backend's Razorpay account, so Checkout must open with that account's key id
+  // (a different key cannot see the order). Say so in the console when it is not the key of this app's .env.
+  if (request.keyId && request.keyId !== RAZORPAY_KEY_ID) {
+    console.warn(`Razorpay: the backend created this order with ${request.keyId}, not the ${RAZORPAY_KEY_ID} from VITE_RAZORPAY_KEY_ID. Checkout uses the backend's key; change razorpay.key.id / key secret on the backend to switch accounts.`);
+  }
+
   return new Promise<PaymentResult>((resolve, reject) => {
     const checkout = new Razorpay({
       key: request.keyId ?? RAZORPAY_KEY_ID,
       amount: Math.round(request.amount * 100),
       currency: "INR",
-      name: "Ficus Global",
+      name: request.title || "Ficus Global",
       description: request.description,
       order_id: request.orderId,
       prefill: request.customer,
+      readonly: { name: Boolean(request.customer.name), email: Boolean(request.customer.email), contact: Boolean(request.customer.contact) },
       notes: request.notes,
       theme: { color: "#1f7fc4" },
       handler: (response) =>

@@ -1,0 +1,192 @@
+/* Consent letters: the "Review" button in the list and the Review page (letter + student + decision) */
+
+.admin-review-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+.admin-review-button.is-reverify {
+  border-color: #b45309;
+  background: #b45309;
+}
+
+.admin-review {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(18rem, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.admin-review-file {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--soft);
+}
+
+.admin-review-file iframe,
+.admin-review-file img {
+  width: 100%;
+  height: min(72vh, 52rem);
+  min-height: 22rem;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+  object-fit: contain;
+}
+
+.admin-review-loading {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  height: min(72vh, 52rem);
+  min-height: 22rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.admin-review-open {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--purple);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.admin-review-side {
+  position: sticky;
+  top: 1rem;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.admin-review-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.admin-review-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.admin-review-reason {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, #ef4444 9%, var(--surface));
+  color: #b42318;
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-review-card dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.admin-review-card dl > div {
+  display: grid;
+  gap: 2px;
+}
+
+.admin-review-card dt {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-review-card dd {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.admin-review-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, #ef4444 9%, var(--surface));
+  color: #b42318;
+  font-size: 0.84rem;
+}
+
+.admin-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-review-actions .button {
+  display: inline-flex;
+  flex: 1 1 8rem;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+}
+
+.admin-review-actions .admin-approve {
+  border-color: #15803d;
+  background: #15803d;
+}
+
+.admin-review-actions .admin-reject {
+  border-color: #b42318;
+  color: #b42318;
+}
+
+.admin-review-actions .button-danger {
+  border-color: #b42318;
+  background: #b42318;
+  color: #fff;
+}
+
+/* Tablets and phones: the letter first, the details and decision under it */
+@media (max-width: 960px) {
+  .admin-review {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-review-side {
+    position: static;
+  }
+
+  .admin-review-file iframe,
+  .admin-review-file img,
+  .admin-review-loading {
+    height: 60vh;
+    min-height: 18rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-review-actions .button {
+    flex-basis: 100%;
+  }
+}

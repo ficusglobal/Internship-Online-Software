@@ -1,11 +1,14 @@
 import { Award, BookOpen, CalendarCheck, FileText, GraduationCap, LogOut } from "lucide-react";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { acceptanceLetterApi, ApiError, authApi, type AcceptanceLetter, type StudentDetails } from "../../lib/auth-api";
 import { ErrorState } from "../../shared/components/error-state";
 import { Skeleton, SkeletonRegion } from "../../shared/components/skeleton";
 import { Button } from "../../shared/components/ui";
 import "../../styles/student-home.css";
 import "../../styles/consent.css";
+import { certificateAvailability, internshipIsOver } from "./student-certificate-rules";
+
+const StudentCertificate = lazy(() => import("./student-certificate"));
 
 interface StudentHomeProps {
   name: string;
@@ -31,6 +34,7 @@ export function StudentHome({ name, onOpenLetter, onLogout }: StudentHomeProps) 
   // The failure message (empty = none); "Try again" runs the load again
   const [failed, setFailed] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+  const [certificateOpen, setCertificateOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -66,9 +70,17 @@ export function StudentHome({ name, onOpenLetter, onLogout }: StudentHomeProps) 
     return "Your acceptance letter is not issued yet. Open it below to upload your consent letter and pay the internship fee.";
   };
 
+  // The certificate lives here (not on the acceptance letter page) and opens once the internship is over
+  const certificateReady = Boolean(status?.letter) && internshipIsOver(status?.letter?.batchEndDate);
   const options = [
     { title: "Acceptance letter", icon: FileText, action: onOpenLetter, text: "View and download your letter" },
-    { title: "Download certificate", icon: Award, action: undefined, text: "Available after completion" },
+    {
+      title: "Certificate",
+      icon: Award,
+      action: certificateReady ? () => setCertificateOpen(true) : undefined,
+      text: certificateReady ? "View and download your certificate" : certificateAvailability(status?.letter?.batchEndDate),
+      soon: false,
+    },
     { title: "View course", icon: BookOpen, action: undefined, text: "Your course details" },
     { title: "View attendance", icon: CalendarCheck, action: undefined, text: "Your attendance record" },
   ];
@@ -120,12 +132,18 @@ export function StudentHome({ name, onOpenLetter, onLogout }: StudentHomeProps) 
                 </span>
                 <span className="student-home-card-title">{option.title}</span>
                 <span className="student-home-card-text">{option.text}</span>
-                {!available && <span className="student-home-soon">Coming soon</span>}
+                {!available && option.soon !== false && <span className="student-home-soon">Coming soon</span>}
               </button>
             );
           })}
         </div>
       </section>
+
+      {certificateOpen && status?.letter && (
+        <Suspense fallback={null}>
+          <StudentCertificate student={status.student} letter={status.letter} onClose={() => setCertificateOpen(false)} />
+        </Suspense>
+      )}
     </main>
   );
 }

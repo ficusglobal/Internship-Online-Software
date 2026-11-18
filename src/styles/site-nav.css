@@ -306,6 +306,20 @@ body .auth-page {
     padding: 0 12px;
   }
 
+  /* The role button sits in the middle of the bar here: a menu anchored to it would run off the left edge.
+     Anchor the menu to the whole bar instead, with a margin on both sides. */
+  .site-nav .site-role.popover {
+    position: static;
+  }
+
+  .site-menu {
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: 22rem;
+    margin-left: auto;
+  }
+
   .site-role-label,
   .site-role-chevron,
   .site-divider,

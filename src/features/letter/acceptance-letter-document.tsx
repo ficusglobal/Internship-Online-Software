@@ -59,12 +59,15 @@ function CertificateRow({ label, value, children }: { label: string; value?: str
 interface AcceptanceLetterDocumentProps {
   details: LetterDetails;
   studentId: string;
+  // The acceptance letter is shown after registration; the completion certificate only in the student's
+  // certificate section once the internship is over
+  page?: "letter" | "certificate";
 }
 
 // The letter and the completion certificate, each a fixed A4 canvas (794x1123px, 96dpi), so the
 // PDF export matches the preview. The preview is scaled down to fit narrow screens.
 export const AcceptanceLetterDocument = memo(forwardRef<HTMLDivElement, AcceptanceLetterDocumentProps>(
-  function AcceptanceLetterDocument({ details, studentId }, ref) {
+  function AcceptanceLetterDocument({ details, studentId, page = "letter" }, ref) {
     const frame = useRef<HTMLDivElement>(null);
     const [scale, setScale] = useState(1);
 
@@ -82,9 +85,10 @@ export const AcceptanceLetterDocument = memo(forwardRef<HTMLDivElement, Acceptan
     const issueDate = letterIssueDate(details);
 
     return (
-      <div className="fg-letter-frame" ref={frame} style={{ height: LETTER_HEIGHT * 2 * scale }}>
+      <div className="fg-letter-frame" ref={frame} style={{ height: LETTER_HEIGHT * scale }}>
         <div data-letter-scaler style={{ transform: `scale(${scale})`, transformOrigin: "top left" }}>
           <div className="fg-letter-pages" ref={ref}>
+            {page === "letter" && (
             <section className="fg-letter" data-letter-page style={{ backgroundImage: letterBackground }}>
               <header className="fg-letter-brand">
                 <span className="fg-letter-globe">
@@ -149,7 +153,9 @@ export const AcceptanceLetterDocument = memo(forwardRef<HTMLDivElement, Acceptan
                 </div>
               </footer>
             </section>
+            )}
 
+            {page === "certificate" && (
             <section className="fg-certificate" data-letter-page style={{ backgroundImage: certificateBackground }}>
               <p className="fg-cert-reg">Reg-No- UDYAM-JH-00026417</p>
               <div className="fg-cert-brand">
@@ -235,6 +241,7 @@ export const AcceptanceLetterDocument = memo(forwardRef<HTMLDivElement, Acceptan
                 </div>
               </footer>
             </section>
+            )}
           </div>
         </div>
       </div>

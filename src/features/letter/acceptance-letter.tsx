@@ -11,12 +11,14 @@ import {
   authApi,
   type AcceptanceLetter as IssuedLetter,
   type ConsentSummary,
+  masterDataApi,
 } from "../../lib/auth-api";
 import { buildLetterNumber, downloadLetterPdf, type LetterDetails } from "../../lib/acceptance-letter";
 import { consentReady } from "../../lib/consent";
 import { PaymentCancelledError } from "../../lib/payment";
-import { checkoutRegistration, confirmRegistrationPayment } from "../../lib/registration-payment";
+import { checkoutRegistration, confirmRegistrationPayment, describePayment } from "../../lib/registration-payment";
 import { formatCurrency } from "../../lib/utils";
+import { PaymentSummary } from "../../shared/components/payment-summary";
 import { ConsentUpload } from "../consent/consent-upload";
 import { EmailOtp } from "../registration/email-otp";
 import { WhatsappGroupCard } from "../student/whatsapp-group-card";
@@ -149,6 +151,32 @@ export function AcceptanceLetter({
   const cancelled = details?.registrationStatus === "CANCELLED";
   const needsPayment = Boolean(registrationId) && !paid && !cancelled;
 
+  // /student/me has no fee, so the amount (and dates) shown on the payment card come from the batch in the master data
+  const [batchInfo, setBatchInfo] = useState<{ fee: number; period: string } | null>(null);
+  const courseNameForFee = details?.courseName;
+  const batchNameForFee = details?.batchName;
+  const feeKnown = details?.fee != null;
+  useEffect(() => {
+    if (!needsPayment || feeKnown || !courseNameForFee || !batchNameForFee) return;
+    let active = true;
+    void (async () => {
+      try {
+        const course = (await masterDataApi.courses()).find((item) => item.name === courseNameForFee);
+        if (!course) return;
+        const batch = (await masterDataApi.batches(course.id)).find((item) => item.batchName === batchNameForFee);
+        if (!batch || !active) return;
+        const day = (value?: string) => (value ? new Date(`${value.slice(0, 10)}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "");
+        setBatchInfo({ fee: Number(batch.fee), period: batch.startDate && batch.endDate ? `${day(batch.startDate)} – ${day(batch.endDate)}` : "" });
+      } catch {
+        // The card still shows the student; the amount is shown by Razorpay Checkout
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [needsPayment, feeKnown, courseNameForFee, batchNameForFee]);
+  const payFee = details?.fee ?? batchInfo?.fee;
+
   // Pays the registration from this page (used when the student left the form before paying)
   const payNow = async () => {
     if (!details?.registrationId || !consentReady(consent)) return;
@@ -158,13 +186,12 @@ export function AcceptanceLetter({
       const payment = await checkoutRegistration({
         registrationId: details.registrationId,
         authToken: token,
-        description: `${details.courseName ?? "Internship"} · ${details.batchName ?? ""}`,
+        ...describePayment(details),
         customer: {
           name: details.fullName ?? "",
           email: details.email ?? "",
           contact: details.mobileNo ?? "",
         },
-        notes: { registrationNumber: details.registrationNumber ?? "" },
       });
       await confirmRegistrationPayment(payment, token);
       const issued = await acceptanceLetterApi.generate(details.registrationId, token);
@@ -305,6 +332,17 @@ export function AcceptanceLetter({
                 Your registration is saved. Pay the internship fee to finish registration and receive your
                 acceptance letter.
               </p>
+              <PaymentSummary
+                name={details?.fullName}
+                registrationNumber={details?.registrationNumber}
+                email={details?.email}
+                mobile={details?.mobileNo}
+                college={details?.collegeName}
+                course={details?.courseName}
+                batch={details?.batchName}
+                period={batchInfo?.period}
+                amount={payFee}
+              />
               {!consentReady(consent) && (
                 <p className="letter-payment-blocked">
                   Upload the consent letter above to open the payment. / भुगतान के लिए पहले सहमति पत्र अपलोड करें।
@@ -328,8 +366,8 @@ export function AcceptanceLetter({
                 {paying ? <LoaderCircle className="spin" size={16} /> : <CreditCard size={16} />}
                 {paying
                   ? "Processing…"
-                  : details?.fee != null
-                    ? `Pay ${formatCurrency(details.fee)}`
+                  : payFee != null
+                    ? `Pay ${formatCurrency(payFee)}`
                     : "Pay now"}
               </Button>
             </Card>
@@ -354,7 +392,7 @@ export function AcceptanceLetter({
           <Card className="info-card">
             <h3>Payment</h3>
             <ul>
-              <li><strong>Amount:</strong> {details?.fee != null ? formatCurrency(details.fee) : "N/A"}</li>
+              <li><strong>Amount:</strong> {payFee != null ? formatCurrency(payFee) : "N/A"}</li>
               {details?.paymentStatus && <li><strong>Status:</strong> {details.paymentStatus}</li>}
               {details?.registrationStatus && <li><strong>Registration:</strong> {details.registrationStatus}</li>}
               {details?.paymentId && <li><strong>Payment ID:</strong> {details.paymentId}</li>}

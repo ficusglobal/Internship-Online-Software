@@ -12,9 +12,10 @@ import {
 } from "../../lib/auth-api";
 import { consentReady } from "../../lib/consent";
 import { PaymentCancelledError } from "../../lib/payment";
-import { checkoutRegistration, confirmRegistrationPayment, type ConfirmedPayment } from "../../lib/registration-payment";
+import { checkoutRegistration, confirmRegistrationPayment, describePayment, type ConfirmedPayment } from "../../lib/registration-payment";
 import { confirmAction } from "../../shared/components/confirm-dialog";
 import { DropdownSelector } from "../../shared/components/dropdown-selector";
+import { PaymentSummary } from "../../shared/components/payment-summary";
 import { Skeleton } from "../../shared/components/skeleton";
 import { toast } from "../../shared/components/toast";
 import { Input } from "../../shared/components/ui";
@@ -350,9 +351,12 @@ function RegistrationFlow({ mode = "self", scope, draft, onRestart, headerAction
           const next = validate(values);
           const bad = fields.filter((field) => next[field] ?? (serverErrors[field]?.value === String(values[field]) ? serverErrors[field]?.text : undefined));
           if (bad.length) {
-            toast.error("Please correct the highlighted fields before continuing.");
-            // Bring the first problem into view (the body scrolls inside the fixed-height card)
-            window.setTimeout(() => bodyRef.current?.querySelector(".field-error:not(.field-error-placeholder)")?.scrollIntoView({ block: "center", behavior: "smooth" }), 50);
+            // The errors are already shown under their fields: take the user to the first one (no extra toast covering the form)
+            window.setTimeout(() => {
+              const first = bodyRef.current?.querySelector<HTMLElement>(".field-error:not(.field-error-placeholder)")?.closest<HTMLElement>(".reg-field");
+              first?.scrollIntoView({ block: "center", behavior: "smooth" });
+              first?.querySelector<HTMLElement>("input:not([type=hidden]), button.dropdown-trigger, [role=radio]")?.focus({ preventScroll: true });
+            }, 50);
             return false;
           }
           return true;
@@ -485,12 +489,22 @@ function RegistrationFlow({ mode = "self", scope, draft, onRestart, headerAction
             let paid = payment;
             if (!paid && fee > 0) {
               try {
+                const info = describePayment({
+                    fullName: values.fullName,
+                    registrationNumber: values.registrationNumber,
+                    collegeName: selectedCollege?.name,
+                    courseName: selectedCourse?.name,
+                    batchName: selectedBatch?.batchName,
+                    mobileNo: values.mobileNo,
+                    email,
+                });
                 paid = await checkoutRegistration({
                   registrationId,
                   authToken: response.token,
-                  description: `${selectedCourse?.name ?? "Internship"} · ${selectedBatch?.batchName ?? ""}`,
+                  title: info.title,
+                  description: info.description,
                   customer: { name: values.fullName.trim(), email, contact: values.mobileNo },
-                  notes: { registrationNumber: values.registrationNumber.trim(), batchId: values.batchId, registeredVia: mode === "cyber-cafe" ? "CYBER_CAFE" : "SELF" },
+                  notes: { ...info.notes, registeredVia: mode === "cyber-cafe" ? "CYBER_CAFE" : "SELF" },
                 });
                 setPayment(paid);
               } catch (error) {
@@ -1119,31 +1133,20 @@ function RegistrationFlow({ mode = "self", scope, draft, onRestart, headerAction
               <CreditCard size={16} />,
               "2 · Payment / भुगतान",
               <>
-                <div className="payment-summary">
-                  <div className="payment-row">
-                    <span>Course</span>
-                    <b>{selectedCourse?.name}</b>
-                  </div>
-                  <div className="payment-row">
-                    <span>Batch</span>
-                    <b>{selectedBatch?.batchName}</b>
-                  </div>
-                  <div className="payment-row">
-                    <span>Student</span>
-                    <b>{values.fullName}</b>
-                  </div>
-                  <div className="payment-row payment-total">
-                    <span>Total Amount</span>
-                    <b>{formatFee(fee)}</b>
-                  </div>
-                </div>
-                {payment && (
-                  <p className="registration-status" role="status">
-                    <CheckCircle2 size={16} /> Payment received · {payment.paymentId}
-                  </p>
-                )}
+                <PaymentSummary
+                  name={values.fullName.trim()}
+                  registrationNumber={values.registrationNumber}
+                  email={email}
+                  mobile={values.mobileNo}
+                  college={selectedCollege?.name}
+                  course={selectedCourse?.name}
+                  batch={selectedBatch?.batchName}
+                  period={selectedBatch ? `${formatDate(selectedBatch.startDate)} – ${formatDate(selectedBatch.endDate)}` : undefined}
+                  amount={fee}
+                  paymentId={payment?.paymentId}
+                />
                 {!consentReady(consent) && !payment && (
-                  <p className="reg-hint" role="status">
+                  <p className="reg-hint reg-hint-flat" role="status">
                     Upload your consent letter above to unlock payment. / भुगतान के लिए पहले सहमति पत्र अपलोड करें।
                   </p>
                 )}
@@ -1152,7 +1155,6 @@ function RegistrationFlow({ mode = "self", scope, draft, onRestart, headerAction
                     {submitError}
                   </p>
                 )}
-                <p className="payment-method-title">Secure payment via Razorpay (UPI, cards, net banking) / सुरक्षित भुगतान</p>
               </>,
             )}
           </>
@@ -1219,9 +1221,12 @@ function RegistrationFlow({ mode = "self", scope, draft, onRestart, headerAction
                   </>
                 ) : null}
               </span>
-              <button type="button" className="button button-outline reg-back" onClick={back} disabled={backDisabled}>
-                <ArrowLeft size={16} /> Back
-              </button>
+              {/* Once the account exists there is nothing to go back to */}
+              {step !== PAY && (
+                <button type="button" className="button button-outline reg-back" onClick={back} disabled={backDisabled}>
+                  <ArrowLeft size={16} /> Back
+                </button>
+              )}
               <button type="submit" className="button reg-next" disabled={nextDisabled}>
                 {busy ? <LoaderCircle className="spin" size={16} /> : null}
                 {nextLabel}
