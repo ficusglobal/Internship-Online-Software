@@ -8,4 +8,5 @@ import "./styles/student-home.css";
 import "./styles/responsive-fixes.css";
 import "./styles/form-controls.css";
 import "./styles/password-toggle.css";
+import "./styles/payment-checkout.css";
 createRoot(document.getElementById("root")!).render(<StrictMode><App /></StrictMode>);

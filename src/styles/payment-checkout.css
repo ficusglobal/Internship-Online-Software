@@ -1,0 +1,9 @@
+/* Razorpay Checkout runs in a transparent iframe over its own dark backdrop. When the app is in the dark theme
+   (color-scheme: dark) the browser paints a mismatching iframe with an opaque white canvas, hiding the page overlay.
+   Giving the Checkout container and frame the light scheme (Razorpay's own) keeps the iframe transparent. */
+.razorpay-container,
+.razorpay-container iframe,
+iframe.razorpay-checkout-frame {
+  color-scheme: light;
+  background: transparent !important;
+}
