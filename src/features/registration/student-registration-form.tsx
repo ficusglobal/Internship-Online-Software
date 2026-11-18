@@ -18,7 +18,7 @@ import { DropdownSelector } from "../../shared/components/dropdown-selector";
 import { PaymentSummary } from "../../shared/components/payment-summary";
 import { Skeleton } from "../../shared/components/skeleton";
 import { toast } from "../../shared/components/toast";
-import { Input } from "../../shared/components/ui";
+import { Input, PasswordInput } from "../../shared/components/ui";
 import { ConsentUpload } from "../consent/consent-upload";
 import { EmailOtp } from "./email-otp";
 import { clearDraft, loadDraft, saveDraft, type RegistrationDraft } from "./registration-draft";
@@ -1076,12 +1076,12 @@ function RegistrationFlow({ mode = "self", scope, draft, onRestart, headerAction
               <>
                 <div className="reg-field">
                   <label htmlFor="reg-password">Password / पासवर्ड</label>
-                  <Input id="reg-password" name="password" type="password" autoComplete="new-password" value={values.password} onChange={handleChange} onBlur={() => setFieldTouched("password", true)} placeholder="At least 8 characters" />
+                  <PasswordInput id="reg-password" name="password" autoComplete="new-password" value={values.password} onChange={handleChange} onBlur={() => setFieldTouched("password", true)} placeholder="At least 8 characters" />
                   {message("password")}
                 </div>
                 <div className="reg-field">
                   <label htmlFor="reg-confirmPassword">Confirm password / पुष्टि करें</label>
-                  <Input id="reg-confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" value={values.confirmPassword} onChange={handleChange} onBlur={() => setFieldTouched("confirmPassword", true)} placeholder="Re-enter your password" />
+                  <PasswordInput id="reg-confirmPassword" name="confirmPassword" autoComplete="new-password" value={values.confirmPassword} onChange={handleChange} onBlur={() => setFieldTouched("confirmPassword", true)} placeholder="Re-enter your password" />
                   {message("confirmPassword")}
                 </div>
                 <label className="reg-terms">

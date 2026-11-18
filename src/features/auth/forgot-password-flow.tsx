@@ -8,7 +8,7 @@ import {
 import { useEffect, useState, type FormEvent } from "react";
 import { passwordResetApi } from "../../lib/auth-api";
 import { toast } from "../../shared/components/toast";
-import { Button, Input } from "../../shared/components/ui";
+import { Button, Input, PasswordInput } from "../../shared/components/ui";
 import "../../styles/email-verification.css";
 
 type Stage = "email" | "reset";
@@ -187,8 +187,7 @@ export function ForgotPasswordFlow({
             New password / नया पासवर्ड
             <div className="auth-input">
               <LockKeyhole size={17} />
-              <Input
-                type="password"
+              <PasswordInput
                 autoComplete="new-password"
                 placeholder="At least 8 characters"
                 minLength={8}
@@ -201,8 +200,7 @@ export function ForgotPasswordFlow({
             Confirm new password / नए पासवर्ड की पुष्टि करें
             <div className="auth-input">
               <LockKeyhole size={17} />
-              <Input
-                type="password"
+              <PasswordInput
                 autoComplete="new-password"
                 placeholder="Re-enter your new password"
                 minLength={8}

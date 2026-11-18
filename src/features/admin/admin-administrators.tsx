@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { UserPlus } from "lucide-react";
 import { adminApi } from "../../lib/admin-api";
-import { Input } from "../../shared/components/ui";
+import { Input, PasswordInput } from "../../shared/components/ui";
 import { FieldMessage, FormModal, Panel, requiredErrors, useAdminForm } from "./admin-ui";
 
 interface CreatedAdministrator {
@@ -94,7 +94,7 @@ function AdministratorModal({ onClose, onCreated }: { onClose: () => void; onCre
         </label>
         <label>
           Temporary password *
-          <Input type="password" maxLength={72} autoComplete="new-password" value={form.values.password} onChange={form.change("password")} />
+          <PasswordInput maxLength={72} autoComplete="new-password" value={form.values.password} onChange={form.change("password")} />
           <FieldMessage name="password" fields={form.fields} />
         </label>
       </div>

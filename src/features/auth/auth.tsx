@@ -15,7 +15,7 @@ import { Field, Form, Formik } from "formik";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Theme, University } from "../../types";
-import { Button } from "../../shared/components/ui";
+import { Button, PasswordInput } from "../../shared/components/ui";
 import { authApi, masterDataApi, type AuthResponse, type StudentDetails } from "../../lib/auth-api";
 import { toast } from "../../shared/components/toast";
 import { saveSession, tokenExpiry, type AccountRole } from "../../lib/session";
@@ -275,7 +275,7 @@ function CredentialsForm({
               <Field
                 className="input"
                 name="password"
-                type="password"
+                as={PasswordInput}
                 placeholder="At least 8 characters"
                 minLength={8}
                 required
@@ -293,7 +293,7 @@ function CredentialsForm({
                 <Field
                   className="input"
                   name="confirmPassword"
-                  type="password"
+                  as={PasswordInput}
                   placeholder="Re-enter your password"
                   minLength={8}
                   required
